@@ -26,7 +26,7 @@ async def chat_proxy(dados: ChatInput):
     instrucao = PERSONALIDADES.get(dados.modo, PERSONALIDADES["gestor"])
     
     try:
-        # Usando o modelo mais atualizado agora que temos uma chave com a cota zerada!
+        # Usando o modelo mais atualizado do Gemini
         response = client.models.generate_content(
             model='gemini-2.5-flash', 
             contents=dados.pergunta,
@@ -37,5 +37,5 @@ async def chat_proxy(dados: ChatInput):
         return {"resposta": response.text, "modo_usado": dados.modo}
         
     except Exception as e:
-        # Se der erro, mostraremos na tela para facilitar a vida
+        # Caso ocorra erro, mostre na tela
         raise HTTPException(status_code=500, detail=str(e))
