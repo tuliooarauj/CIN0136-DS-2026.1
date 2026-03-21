@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberPlanner - IA</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #bbe4e6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 700px; /* Aumentei um pouquinho para caber melhor as listas */
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #ffcc00; 
+            color: #000;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #000;
+        }
+        .chat-box {
+            height: 700px;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #fafafa;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 85%;
+            padding: 12px;
+            border-radius: 8px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .user-msg {
+            background-color: #000;
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+        .ai-msg {
+            background-color: #e0e0e0;
+            color: #000;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+        
+        /* 2. CSS extra para deixar o Markdown bem formatado dentro do balão */
+        .ai-msg p { margin: 0 0 10px 0; }
+        .ai-msg p:last-child { margin: 0; }
+        .ai-msg ul, .ai-msg ol { margin: 0; padding-left: 20px; }
+        .ai-msg strong { color: #222; }
+        
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background-color: #fff;
+            border-top: 1px solid #ccc;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #000;
+            color: #ffcc00;
+            border: none;
+            padding: 10px 15px;
+            margin-left: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="header">CyberPlanner - Gestor IA</div>
+    <div class="chat-box" id="chat-box">
+        <div class="message ai-msg">Olá! Sou o seu Gestor de Tempo. Como posso organizar sua rotina hoje?</div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Ex: Tenho aula até as 12h e academia.">
+        <button onclick="enviarMensagem()">Enviar</button>
+    </div>
+</div>
+
+<script>
+    async function enviarMensagem() {
+        const inputField = document.getElementById("user-input");
+        const chatBox = document.getElementById("chat-box");
+        const perguntaText = inputField.value;
+
+        if (!perguntaText.trim()) return;
+
+        chatBox.innerHTML += `<div class="message user-msg">${perguntaText}</div>`;
+        inputField.value = "";
+        
+        const typingId = "typing-" + Date.now();
+        chatBox.innerHTML += `<div class="message ai-msg" id="${typingId}">O CyberPlanner está analisando...</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const response = await fetch("http://localhost:8000/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pergunta: perguntaText, modo: "gestor" })
+            });
+
+            const data = await response.json();
+            document.getElementById(typingId).remove();
+            
+            // 3. Aqui acontece a mágica! O marked.parse transforma os ** e * em HTML real
+            const respostaFormatada = marked.parse(data.resposta);
+            
+            chatBox.innerHTML += `<div class="message ai-msg">${respostaFormatada}</div>`;
+            
+        } catch (error) {
+            document.getElementById(typingId).remove();
+            chatBox.innerHTML += `<div class="message ai-msg" style="color: red;">Erro ao conectar com a API. O servidor (Uvicorn) está ligado?</div>`;
+        }
+        
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    document.getElementById("user-input").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            enviarMensagem();
+        }
+    });
+</script>
+
+</body>
+</html>

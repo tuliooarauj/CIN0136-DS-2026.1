@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google import genai
 from google.genai import types
@@ -13,12 +14,23 @@ client = genai.Client()
 
 app = FastAPI()
 
+# --- CONFIGURAÇÃO DE CORS (O PASSE LIVRE PARA O HTML) ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Permite que qualquer HTML acesse a API
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+# ---------------------------------------------------------
+
 class ChatInput(BaseModel):
     pergunta: str
     modo: str = "gestor"
 
 PERSONALIDADES = {
-    "gestor":"Você é um gestor, organizador de horários, não permita que haja conflitos de horários e faça de modo que maximize a rotina do usuário."
+    "gestor":"Você é um gestor, organizador de horários, não permita que haja conflitos de horários e faça de modo que maximize a rotina do usuário." +
+    "no final gere uma tabela para o usuário ver os horários direitinho."
 }
 
 @app.post("/chat")
