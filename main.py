@@ -6,7 +6,7 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
-# 1. Carrega sua API Key do arquivo .env
+# 1. Carrega a API Key do arquivo .env
 load_dotenv()
 
 # 2. Inicia o cliente novo da Google (ele pega a chave automaticamente do .env)
@@ -14,7 +14,7 @@ client = genai.Client()
 
 app = FastAPI()
 
-# --- CONFIGURAÇÃO DE CORS (O PASSE LIVRE PARA O HTML) ---
+# --- CONFIGURAÇÃO DE CORS ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # Permite que qualquer HTML acesse a API
