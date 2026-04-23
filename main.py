@@ -71,7 +71,7 @@ async def chat_proxy(dados: ChatInput):
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-flash-latest",
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=instrucao,
