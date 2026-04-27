@@ -19,7 +19,7 @@ Para rodar este projeto, você precisará instalar as seguintes dependências do
 Execute o comando abaixo no seu terminal para instalar tudo de uma vez:
 
 ```bash
-pip install fastapi uvicorn google-genai python-dotenv pydantic
+pip pip install -r requirements.txt
 ```
 ### Como executar a aplicação
 Para inicio da aplicação, rode esse comando no terminal
