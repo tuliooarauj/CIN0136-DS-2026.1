@@ -7,7 +7,7 @@ from google.genai import types
 from dotenv import load_dotenv
 
 # 1. Carrega a API Key do arquivo .env
-load_dotenv()
+load_dotenv(".env.example")
 
 # 2. Inicia o cliente novo da Google (ele pega a chave automaticamente do .env)
 client = genai.Client()
