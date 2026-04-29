@@ -8,6 +8,8 @@ Seja bem-vindo ao projeto! Para manter a organização entre as equipes, siga es
 2. Crie uma branch para sua tarefa: `feature/nome-da-task` ou `fix/nome-do-bug`.
 3. Ao finalizar, abra um **Pull Request** e aguarde a revisão de pelo menos um membro.
 
+Nota Importante: A branch main possui Branch Protection Rules ativadas. Isso significa que o fluxo via Pull Request não é apenas uma recomendação, mas uma regra aplicada automaticamente pelo GitHub.
+
 ## 📝 Padrão de Commits
 
 Usamos o padrão de Commits Semânticos:
