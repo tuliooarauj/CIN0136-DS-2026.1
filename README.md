@@ -17,14 +17,23 @@ Para rodar este projeto, você precisará instalar as seguintes dependências do
 
 ### Comando para Instalação:
 Execute o comando abaixo no seu terminal para instalar tudo de uma vez:
-
 ```bash
-pip pip install -r requirements.txt
+pip install -r requirements.txt
 ```
+
+### Como obter sua API Key do Gemini
+Para que a aplicação funcione, você precisará de uma chave de acesso à API da Google:
+
+1. Acesse o [Google AI Studio](https://aistudio.google.com/app/api-keys?project=gen-lang-client-0570234062);
+2. Faça login com sua conta Google;
+3. Clique no botão "Create API key";
+4. Copie a chave gerada;
+5. Cole no arquivo ```.env.example``` na parte indicada.
+
 ### Como executar a aplicação
 Para inicio da aplicação, rode esse comando no terminal
 ```bash 
-uvicorn app:main --reload
+uvicorn main:app --reload
 ```
 Após executar, abra o arquivo `index.html` 
 
