@@ -39,6 +39,3 @@ Após executar, abra o arquivo `index.html`
 
 ## Inicio
 Ao abrir a página html você pode interagir pelo chat, informando sua rotina, preferências e limitações para gerar a sua rotina.
-
-### OBS
-> Se você tiver uma chave de API do Gemini e quiser utiliza-la só incorporar sua chave no arquivo `.env.example` e apagar o arquivo `.env`
