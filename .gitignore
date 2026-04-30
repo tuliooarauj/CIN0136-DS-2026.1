@@ -9,5 +9,5 @@ __pycache__/
 
 .env
 
-.vscode/
-.idea/
+__pycache__
+>>>>>>> main
