@@ -3,3 +3,5 @@ uvicorn
 google-genai
 python-dotenv
 pydantic
+jinja2
+aiofiles
