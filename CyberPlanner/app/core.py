@@ -22,8 +22,16 @@ PERSONALIDADES = {
     )
 }
 
-def obter_resposta_ia(pergunta: str, historico: list, modo: str):
+FORMA_VISUALIZACAO = {
+    "dia" : ("Cyberplanner quero que você me organize me cornograma apenas do meu dia baseado no que eu mandei para você"),
+    "semana" : ("Cyberplanner quero que monte o cronograma do meu dia e replique esse cornograma para o resto de minha semana, caso eu queira mudar algo mude no dia especificado"),
+    "mes" : ("Cyberplanner quero que monte o cronograma do meu dia e replique esse cornograma para o resto do meu mes, caso eu queira mudar algo mude no dia especificado ")
+}
+
+def obter_resposta_ia(pergunta: str, historico: list, modo: str,visualizacao: str):
     instrucao = PERSONALIDADES.get(modo, PERSONALIDADES["gestor"])
+
+    instrucao += FORMA_VISUALIZACAO[visualizacao]
     
     # Prepara o histórico para o formato do Gemini
     contents = []

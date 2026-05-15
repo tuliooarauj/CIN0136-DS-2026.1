@@ -33,7 +33,7 @@ async def abrir_site(request: Request):
 async def chat_proxy(dados: ChatInput):
     try:
         # O main.py não sabe como o Gemini funciona, ele apenas chama o core.py
-        resposta = obter_resposta_ia(dados.pergunta, dados.historico, dados.modo)
+        resposta = obter_resposta_ia(dados.pergunta, dados.historico, dados.modo,dados.visualizacao)
         
         return {
             "resposta": resposta,
