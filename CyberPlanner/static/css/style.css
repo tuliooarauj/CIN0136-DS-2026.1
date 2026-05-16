@@ -1,256 +1,300 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        :root {
-            --black: #0a0a0a;
-            --yellow: #f5c400;
-            --yellow-dim: #a88900;
-            --white: #f4f1eb;
-            --surface: #161616;
-            --surface2: #1f1f1f;
-            --surface3: #2a2a2a;
-            --border: rgba(255,255,255,0.08);
-            --user-bg: #f5c400;
-            --user-text: #0a0a0a;
-            --ai-bg: #1f1f1f;
-            --ai-text: #e8e4d9;
-            --muted: #888;
-            --radius: 12px;
-        }
+:root {
+    --black: #0a0a0a;
+    --yellow: #f5c400;
+    --yellow-dim: #a88900;
+    --white: #f4f1eb;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --surface3: #2a2a2a;
+    --border: rgba(255,255,255,0.08);
+    --user-bg: #f5c400;
+    --user-text: #0a0a0a;
+    --ai-bg: #1f1f1f;
+    --ai-text: #e8e4d9;
+    --muted: #888;
+    --radius: 12px;
+}
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background-color: var(--black);
-            color: var(--white);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 1rem;
-        }
+body {
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--black);
+    color: var(--white);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1rem;
+    overflow-x: hidden;
+}
 
-        .chat-container {
-            width: 720px;
-            max-width: 100%;
-            height: 92vh;
-            max-height: 860px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+/* ── LAYOUT PRINCIPAL (COM ANIMAÇÃO SUAVE) ── */
+.app-layout {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    /* Começa com o chat normal */
+    max-width: 720px; 
+    height: 92vh;
+    max-height: 860px;
+    /* Transição deliciosa, freia suavemente no fim */
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); 
+}
 
-        /* ── HEADER ── */
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 18px 24px;
-            border-bottom: 1px solid var(--border);
-            background: var(--surface);
-        }
-        .header-icon {
-            width: 36px;
-            height: 36px;
-            background: var(--yellow);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-        .header-text h1 {
-            font-family: 'Space Mono', monospace;
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            color: var(--yellow);
-            text-transform: uppercase;
-        }
-        .header-text p {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 1px;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #4ade80;
-            border-radius: 50%;
-            margin-left: auto;
-            box-shadow: 0 0 6px #4ade80;
-        }
+/* Quando entra na visão Diária do calendário */
+.app-layout.calendar-active {
+    max-width: 1200px;
+}
 
-        /* ── CHAT BOX ── */
-        .chat-box {
-            flex: 1;
-            padding: 20px 24px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--surface3) transparent;
-        }
-        .chat-box::-webkit-scrollbar { width: 5px; }
-        .chat-box::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 10px; }
+/* No modo mês, tira o gap (espaço) para o calendário grudar na esquerda */
+.app-layout.calendar-active.month-mode {
+    max-width: 1400px; 
+    gap: 0;
+}
 
-        /* ── MESSAGES ── */
-        .message-row {
-            display: flex;
-            gap: 10px;
-            animation: fadeUp 0.25s ease forwards;
-        }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .message-row.user { flex-direction: row-reverse; }
 
-        .avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: 700;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-        .avatar.ai  { background: var(--yellow); color: var(--black); font-family: 'Space Mono', monospace; }
-        .avatar.usr { background: var(--surface3); color: var(--muted); }
+/* ── CHAT CONTAINER ── */
+.chat-container {
+    flex: 1;
+    height: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 1;
+    max-width: 1000px; /* Largura arbitrária grande para fluidez */
+}
 
-        .bubble {
-            max-width: 75%;
-            padding: 12px 16px;
-            border-radius: var(--radius);
-            line-height: 1.6;
-            font-size: 14.5px;
-        }
-        .bubble.ai-msg {
-            background: var(--ai-bg);
-            color: var(--ai-text);
-            border: 1px solid var(--border);
-            border-bottom-left-radius: 4px;
-        }
-        .bubble.user-msg {
-            background: var(--user-bg);
-            color: var(--user-text);
-            border-bottom-right-radius: 4px;
-            font-weight: 500;
-        }
+/* 🌟 A MÁGICA AQUI: No modo Mês, o chat encolhe até sumir completamente */
+.app-layout.calendar-active.month-mode .chat-container {
+    flex: 0; 
+    min-width: 0;
+    max-width: 0;
+    opacity: 0;
+    border-width: 0; /* Some com a borda para não ficar uma linha sobrando */
+}
 
-        /* Markdown inside AI bubble */
-        .bubble.ai-msg p  { margin: 0 0 8px; }
-        .bubble.ai-msg p:last-child { margin: 0; }
-        .bubble.ai-msg ul, .bubble.ai-msg ol { margin: 4px 0 8px 18px; }
-        .bubble.ai-msg li { margin-bottom: 3px; }
-        .bubble.ai-msg strong { color: var(--yellow); font-weight: 600; }
-        .bubble.ai-msg h1, .bubble.ai-msg h2, .bubble.ai-msg h3 {
-            font-family: 'Space Mono', monospace;
-            color: var(--yellow);
-            margin: 12px 0 6px;
-            font-size: 13px;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-        .bubble.ai-msg table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
-            font-size: 13px;
-        }
-        .bubble.ai-msg th {
-            background: var(--surface3);
-            color: var(--yellow);
-            padding: 7px 10px;
-            text-align: left;
-            font-family: 'Space Mono', monospace;
-            font-size: 11px;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-        .bubble.ai-msg td {
-            padding: 6px 10px;
-            border-bottom: 1px solid var(--border);
-            color: var(--ai-text);
-        }
-        .bubble.ai-msg tr:last-child td { border-bottom: none; }
-        .bubble.ai-msg code {
-            background: var(--surface3);
-            color: var(--yellow);
-            padding: 1px 5px;
-            border-radius: 4px;
-            font-family: 'Space Mono', monospace;
-            font-size: 12px;
-        }
 
-        /* typing indicator */
-        .typing-dots {
-            display: inline-flex;
-            gap: 4px;
-            align-items: center;
-            height: 18px;
-        }
-        .typing-dots span {
-            width: 6px;
-            height: 6px;
-            background: var(--muted);
-            border-radius: 50%;
-            animation: dot 1.2s infinite;
-        }
-        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes dot {
-            0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-            40% { opacity: 1; transform: scale(1); }
-        }
+/* ── HEADER E BOTÕES ── */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    white-space: nowrap;
+}
+.header-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--yellow);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.header-text h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--yellow);
+    text-transform: uppercase;
+}
+.header-text p { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
-        /* ── INPUT AREA ── */
-        .input-area {
-            padding: 16px 24px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            background: var(--surface);
-        }
-        #user-input {
-            flex: 1;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 11px 16px;
-            font-size: 14px;
-            color: var(--white);
-            font-family: 'DM Sans', sans-serif;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        #user-input::placeholder { color: var(--muted); }
-        #user-input:focus { border-color: rgba(245,196,0,0.4); }
+#toggle-calendar-btn {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: auto;
+    margin-right: 12px;
+    transition: background 0.2s, border-color 0.2s;
+}
+#toggle-calendar-btn:hover { background: var(--surface2); border-color: var(--yellow); }
+.status-dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 6px #4ade80; flex-shrink: 0; }
 
-        #send-btn {
-            background: var(--yellow);
-            color: var(--black);
-            border: none;
-            border-radius: 10px;
-            width: 44px;
-            height: 44px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: background 0.2s, transform 0.1s;
-            flex-shrink: 0;
-        }
-        #send-btn:hover  { background: #ffd535; }
-        #send-btn:active { transform: scale(0.95); }
-        #send-btn:disabled { background: var(--surface3); cursor: not-allowed; }
 
-        .error-msg { color: #f87171; font-size: 13px; }
+/* ── CHAT BOX ── */
+.chat-box {
+    flex: 1;
+    padding: 20px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.message-row { display: flex; gap: 10px; animation: fadeUp 0.25s ease forwards; }
+.message-row.user { flex-direction: row-reverse; }
+
+.avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.avatar.ai  { background: var(--yellow); color: var(--black); font-family: 'Space Mono', monospace; }
+.avatar.usr { background: var(--surface3); color: var(--muted); }
+
+.bubble { max-width: 75%; padding: 12px 16px; border-radius: var(--radius); line-height: 1.6; font-size: 14.5px; }
+.bubble.ai-msg { background: var(--ai-bg); color: var(--ai-text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.bubble.user-msg { background: var(--user-bg); color: var(--user-text); border-bottom-right-radius: 4px; font-weight: 500; }
+
+/* Formatação avançada das mensagens da IA */
+.bubble.ai-msg strong { color: var(--yellow); font-weight: 600; }
+.bubble.ai-msg table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+.bubble.ai-msg th { background: var(--surface3); color: var(--yellow); padding: 7px 10px; text-align: left; font-family: 'Space Mono', monospace; font-size: 11px; }
+.bubble.ai-msg td { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--ai-text); }
+
+/* Correção das Listas (1. 2. 3. e Bolinhas) */
+.bubble ul, .bubble ol {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding-left: 28px; 
+}
+.bubble li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+.bubble li::marker {
+    color: var(--yellow);
+    font-weight: bold;
+}
+
+/* Indicador de Digitação */
+.typing-dots { display: inline-flex; gap: 4px; align-items: center; height: 18px; }
+.typing-dots span { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: dot 1.2s infinite; }
+@keyframes dot { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+
+
+/* ── INPUT AREA ── */
+.input-area { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--surface); }
+#user-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 16px; font-size: 14px; color: var(--white); outline: none; }
+#send-btn { background: var(--yellow); color: var(--black); border: none; border-radius: 10px; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;}
+
+
+/* ── INTERFACE DO PAINEL LATERAL ── */
+.calendar-sidebar {
+    width: 0;
+    opacity: 0;
+    border: none;
+    background: var(--surface);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Transição suave quando abre e fecha */
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.app-layout.calendar-active .calendar-sidebar {
+    width: 450px;
+    opacity: 1;
+    border: 1px solid var(--border);
+}
+
+/* No modo Mês, o calendário cresce e toma o espaço principal */
+.app-layout.calendar-active.month-mode .calendar-sidebar {
+    flex: 1; 
+    width: auto; 
+}
+
+
+/* ── CABEÇALHO DO CALENDÁRIO ── */
+.calendar-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 15px; }
+.sidebar-top { display: flex; justify-content: space-between; align-items: center; }
+.sidebar-top h2 { font-family: 'Space Mono', monospace; font-size: 14px; color: var(--yellow); text-transform: uppercase; white-space: nowrap;}
+
+/* Alternador Dia/Mês */
+.view-switcher { display: flex; background: var(--surface3); padding: 2px; border-radius: 6px; }
+.switch-btn { background: transparent; border: none; color: var(--muted); padding: 4px 12px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+.switch-btn.active { background: var(--yellow); color: var(--black); }
+
+/* Abas de Dias Semanais */
+.days-tabs { display: flex; justify-content: space-between; background: var(--surface2); padding: 4px; border-radius: 50px; border: 1px solid var(--border); }
+.tab-btn { background: transparent; border: none; color: var(--muted); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-weight: 600; font-size: 12px; }
+.tab-btn.active { background: var(--yellow); color: var(--black); }
+
+.calendar-body { flex: 1; padding: 20px; overflow-y: auto; }
+
+
+/* ── LINHA DO TEMPO DIÁRIA ── */
+.calendar-timeline { display: flex; flex-direction: column; gap: 16px; }
+.timeline-item { display: flex; gap: 15px; align-items: flex-start; }
+.time-tag { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--yellow); width: 75px; text-align: right; padding-top: 10px; flex-shrink: 0;}
+.timeline-card { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; display: flex; overflow: hidden; }
+.card-bar { width: 4px; background: var(--yellow); flex-shrink: 0;}
+.card-content { padding: 12px 16px; }
+.card-content h4 { font-size: 14px; color: var(--white); font-weight: 500; }
+.card-content h4 strong { color: var(--yellow); }
+.card-content span { font-size: 12px; color: var(--muted); display: block; margin-top: 4px; }
+
+
+/* ── CALENDÁRIO MENSAL (GRID) ── */
+.month-view-container { display: flex; flex-direction: column; gap: 8px; height: 100%;}
+.month-grid-days-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    padding-bottom: 4px;
+}
+.month-grid-cells {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    flex: 1;
+}
+.month-day-cell {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+.month-day-cell:hover { background: var(--surface3); transform: translateY(-2px); border-color: rgba(245, 196, 0, 0.6);}
+.day-number { font-size: 12px; color: var(--white); font-weight: 500; }
+.month-day-cell.has-event { border-color: rgba(245, 196, 0, 0.4); background: rgba(245, 196, 0, 0.02); }
+.month-event-pill {
+    background: var(--yellow);
+    color: var(--black);
+    font-size: 8px;
+    font-weight: 700;
+    padding: 2px 4px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+.empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+.empty-state p { font-size: 14px; margin-bottom: 4px; }
+.empty-state span { font-size: 12px; }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
