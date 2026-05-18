@@ -26,8 +26,8 @@ templates = Jinja2Templates(directory="templates")
 # Rota para abrir o site no navegador
 @app.get("/")
 async def abrir_site(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
+    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
+    
 # Rota que o seu JavaScript (frontend) vai chamar
 @app.post("/chat")
 async def chat_proxy(dados: ChatInput):
