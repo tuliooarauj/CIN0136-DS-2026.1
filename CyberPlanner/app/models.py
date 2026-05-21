@@ -16,6 +16,11 @@ class UserAuth(BaseModel):
     username: str
     password: str
 
+class SalvarMensagemInput(BaseModel):
+    user_id: int
+    role: str
+    text: str
+
 def inicializar_banco():
     conexao = sqlite3.connect("cyberplanner.db")
     cursor = conexao.cursor()
@@ -49,3 +54,40 @@ def verificar_usuario(username, password):
     if usuario:
         return usuario[0]
     return None
+
+def criar_tabela_historico():
+    conexao = sqlite3.connect("cyberplanner.db")
+    cursor = conexao.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS historico_chat (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            text TEXT NOT NULL,
+            data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES usuarios(id)
+        )
+    """)
+    conexao.commit()
+    conexao.close()
+
+def salvar_mensagem_banco(user_id: int, role: str, text: str):
+    conexao = sqlite3.connect("cyberplanner.db")
+    cursor = conexao.cursor()
+    cursor.execute(
+        "INSERT INTO historico_chat (user_id, role, text) VALUES (?, ?, ?)",
+        (user_id, role, text)
+    )
+    conexao.commit()
+    conexao.close()
+
+def buscar_historico_usuario(user_id: int):
+    conexao = sqlite3.connect("cyberplanner.db")
+    cursor = conexao.cursor()
+    cursor.execute(
+        "SELECT role, text FROM historico_chat WHERE user_id = ? ORDER BY data_envio ASC",
+        (user_id,)
+    )
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"role": row[0], "text": row[1]} for row in linhas]

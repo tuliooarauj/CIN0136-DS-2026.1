@@ -4,13 +4,21 @@ if (!localStorage.getItem("cyberplanner_user_id")) {
 }
 const API_URL = "http://localhost:8000/chat";
 
-// Histórico da conversa mantido no frontend
-const historico = [];
+// --- CONTROLE DE MÚLTIPLAS CONVERSAS EM MEMÓRIA (ESTILO GEMINI) ---
+const bancoConversas = {}; 
+let conversaAtivaId = "chat_inicial";
 
-// Base de dados em memória separada por dia da semana
-let rotinaGlobal = {
-    Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: []
+// Inicializa a primeira conversa padrão do sistema (fallback temporário)
+bancoConversas[conversaAtivaId] = {
+    titulo: "✨ Conversa Atual",
+    historicoLocal: [], 
+    rotinaLocal: { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] }
 };
+
+// Referências dinâmicas globais
+let historico = bancoConversas[conversaAtivaId].historicoLocal;
+let rotinaGlobal = bancoConversas[conversaAtivaId].rotinaLocal;
+
 let diaSelecionado = "Seg";
 let modoVisualizacao = "dia"; // "dia" ou "mes"
 
@@ -22,6 +30,7 @@ function escapeHtml(text) {
 
 function addRow(role, htmlContent, isTyping = false) {
     const chatBox = document.getElementById("chat-box");
+    if (!chatBox) return null;
     const isUser = role === "user";
 
     const row = document.createElement("div");
@@ -43,12 +52,11 @@ function addRow(role, htmlContent, isTyping = false) {
     return row;
 }
 
-// Analisador Inteligente Estrito (Só retorna os dias se realmente encontrar no texto)
+// Analisador Inteligente de Dias
 function descobrirDiasAlvo(texto) {
     const textoMinusculo = texto.toLowerCase();
     let diasAlvo = [];
 
-    // 1º Passo: Procura por dias específicos explicitamente declarados
     if (textoMinusculo.includes("segunda") || textoMinusculo.includes("seg-")) diasAlvo.push("Seg");
     if (textoMinusculo.includes("terça") || textoMinusculo.includes("ter-")) diasAlvo.push("Ter");
     if (textoMinusculo.includes("quarta") || textoMinusculo.includes("qua-")) diasAlvo.push("Qua");
@@ -57,9 +65,6 @@ function descobrirDiasAlvo(texto) {
     if (textoMinusculo.includes("sábado") || textoMinusculo.includes("sabado") || textoMinusculo.includes("sáb-")) diasAlvo.push("Sáb");
     if (textoMinusculo.includes("domingo") || textoMinusculo.includes("dom-")) diasAlvo.push("Dom");
 
-    // O SEGREDO ESTÁ AQUI: 
-    // Só tenta adivinhar por palavras genéricas se NÃO achou dias específicos!
-    // Isso evita que a IA bagunce tudo se disser "Rotina para a semana e fim de semana. Dias: Seg a Sex."
     if (diasAlvo.length === 0) {
         if (textoMinusculo.includes("fim de semana") || textoMinusculo.includes("final de semana")) {
             return ["Sáb", "Dom"];
@@ -74,32 +79,30 @@ function descobrirDiasAlvo(texto) {
 
     return diasAlvo;
 }
-// Leitor de Contexto: Associa a tabela ao título/texto que veio logo antes dela
+
+// Leitor de Contexto da Tabela
 function extrairDadosTabela(textoIA) {
     const linhas = textoIA.split("\n");
     const regexHorario = /(\d{2}[:h]\d{2})/g;
     
-    let novasRotinas = {}; // Guarda separadinho o que é de cada dia
-    let contextoDias = [diaSelecionado]; // Fallback: se não falar nada, vai para o dia atual
-    let bufferDeTexto = ""; // Acumula os títulos como "### Sábado e Domingo"
+    let novasRotinas = {};
+    let contextoDias = [diaSelecionado]; 
+    let bufferDeTexto = ""; 
 
     linhas.forEach(linha => {
         const isTableRow = linha.includes("|") && !linha.includes("---");
         
         if (!linha.includes("|") && linha.trim() !== "") {
-            // Não é tabela. Então é um texto de contexto. Guarda-o!
             bufferDeTexto += " " + linha;
         } else if (isTableRow) {
-            // Começou uma tabela! Vamos ver a quem pertence...
             if (bufferDeTexto.trim() !== "") {
                 const diasDetectados = descobrirDiasAlvo(bufferDeTexto);
                 if (diasDetectados.length > 0) {
-                    contextoDias = diasDetectados; // Atualiza o "alvo" para esta tabela
+                    contextoDias = diasDetectados; 
                 }
-                bufferDeTexto = ""; // Limpa a memória para a próxima tabela não herdar os dias errados
+                bufferDeTexto = ""; 
             }
 
-            // Lê a linha da tabela e coloca nos dias certos
             const colunas = linha.split("|").map(c => c.trim()).filter(c => c !== "");
             if (colunas.length >= 2) {
                 const temHorario = colunas[0].match(regexHorario);
@@ -120,14 +123,12 @@ function extrairDadosTabela(textoIA) {
         }
     });
 
-    // Terminou de ler tudo? Pega no que encontrou e atualiza o calendário oficial
     const diasAtualizados = Object.keys(novasRotinas);
     if (diasAtualizados.length > 0) {
         diasAtualizados.forEach(dia => {
             rotinaGlobal[dia] = novasRotinas[dia];
         });
         
-        // Foca automaticamente no primeiro dia que foi atualizado
         diaSelecionado = diasAtualizados[0];
         atualizarEstiloAbasSemana();
         renderizarCalendario();
@@ -150,13 +151,36 @@ function atualizarEstiloAbasSemana() {
 async function enviarMensagem() {
     const inputField = document.getElementById("user-input");
     const sendBtn   = document.getElementById("send-btn");
+    if (!inputField || !sendBtn) return;
+    
     const pergunta  = inputField.value.trim();
     if (!pergunta) return;
+
+    const idConversaAtual = conversaAtivaId;
+
+    if (bancoConversas[idConversaAtual].titulo === "✨ Conversa Atual" || bancoConversas[idConversaAtual].titulo.startsWith("✨ Nova conversa")) {
+        bancoConversas[idConversaAtual].titulo = `💬 ${pergunta.substring(0, 22)}${pergunta.length > 22 ? '...' : ''}`;
+        renderizarListaLateralCompleta();
+    }
 
     addRow("user", escapeHtml(pergunta));
     historico.push({ role: "user", text: pergunta });
     inputField.value = "";
     sendBtn.disabled = true;
+    
+    const userId = localStorage.getItem("cyberplanner_user_id");
+    
+    // Tenta salvar enviando o chat_id (se o banco aceitar, ótimo. Se ignorar, nossa trava do loader resolve)
+    fetch("/chat/salvar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: parseInt(userId),
+            chat_id: idConversaAtual, 
+            role: "user",
+            text: pergunta
+        })
+    }).catch(err => console.error("Erro ao salvar pergunta no banco:", err));
 
     addRow("model", '<div class="typing-dots"><span></span><span></span><span></span></div>', true);
 
@@ -185,7 +209,17 @@ async function enviarMensagem() {
             addRow("model", respostaHtml);
             historico.push({ role: "model", text: data.resposta });
             
-            // Tenta ler e atualizar o calendário lateral com as tabelas recebidas
+            fetch("/chat/salvar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id: parseInt(userId),
+                    chat_id: idConversaAtual,
+                    role: "model",
+                    text: data.resposta
+                })
+            }).catch(err => console.error("Erro ao salvar resposta no banco:", err));
+            
             extrairDadosTabela(data.resposta);
         }
 
@@ -220,7 +254,6 @@ function alternarVisualizacao(modo) {
     const tabsContainer = document.getElementById('days-tabs-container');
     tabsContainer.style.display = (modo === 'dia') ? 'flex' : 'none';
     
-    // Adiciona a classe 'month-mode' que aciona a animação de ocultar o chat e expandir o calendário
     const appLayout = document.querySelector('.app-layout');
     if (modo === 'mes') {
         appLayout.classList.add('month-mode');
@@ -246,10 +279,9 @@ function mudarDia(dia, event) {
     renderizarCalendario();
 }
 
-// Clicar no dia do mês volta para o chat e seleciona a aba correta
 function abrirDiaPeloMes(dia) {
-    mudarDia(dia); // Atualiza a aba selecionada (ex: "Ter")
-    alternarVisualizacao('dia'); // Volta o modo, o que traz o chat de volta ao ecrã
+    mudarDia(dia); 
+    alternarVisualizacao('dia'); 
 }
 
 function renderizarCalendario() {
@@ -297,6 +329,84 @@ function renderizarLinhaDoTempo(container) {
     `;
 }
 
+// ── RECONSTRUTOR E DIVISOR INTELIGENTE DE CHATS DO BANCO ──
+async function carregarHistoricoDoBanco(userId) {
+    try {
+        const response = await fetch(`/chat/historico/${userId}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.historico && data.historico.length > 0) {
+                
+                // Reseta a lista local em memória
+                for (let key in bancoConversas) delete bancoConversas[key];
+
+                let idChatAtual = null;
+                let contadorChats = 0;
+
+                data.historico.forEach((msg) => {
+                    const texto = msg.text.toLowerCase().trim();
+                    
+                    // 🧠 CRITÉRIO DE QUEBRA: Cria um chat se vier um ID explícito do banco OU 
+                    // se for um registro antigo linear onde o usuário dá saudações/gatilhos clássicos.
+                    const ehNovoGatilho = texto.startsWith("olá") || 
+                                          texto.startsWith("oi") || 
+                                          texto.startsWith("bom dia") || 
+                                          texto.includes("nova sessão") || 
+                                          texto.includes("limpar rotina") ||
+                                          texto.includes("criar novo chat");
+
+                    // Força quebra de chat se a mensagem anterior foi da IA e a atual do usuário for um gatilho/início
+                    if (msg.role === "user" && (idChatAtual === null || ehNovoGatilho)) {
+                        contadorChats++;
+                        idChatAtual = msg.chat_id || "chat_recuperado_" + contadorChats;
+                        
+                        bancoConversas[idChatAtual] = {
+                            titulo: `💬 ${msg.text.substring(0, 20)}${msg.text.length > 20 ? '...' : ''}`,
+                            historicoLocal: [],
+                            rotinaLocal: { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] }
+                        };
+                    }
+
+                    // Fallback para não quebrar a aplicação caso a primeira mensagem venha sem classificação
+                    if (!idChatAtual) {
+                        contadorChats++;
+                        idChatAtual = "chat_recuperado_" + contadorChats;
+                        bancoConversas[idChatAtual] = {
+                            titulo: "💬 Conversa Antiga",
+                            historicoLocal: [],
+                            rotinaLocal: { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] }
+                        };
+                    }
+
+                    // Aloca a mensagem na gaveta correta dela
+                    bancoConversas[idChatAtual].historicoLocal.push({ role: msg.role, text: msg.text });
+                });
+
+                // Deixa focado por padrão no último chat do histórico (o mais recente)
+                const chavesCarregadas = Object.keys(bancoConversas);
+                if (chavesCarregadas.length > 0) {
+                    conversaAtivaId = chavesCarregadas[chavesCarregadas.length - 1];
+                }
+
+                // Reconstrói as tabelas de cada chat no calendário correspondente de cada gaveta
+                chavesCarregadas.forEach(id => {
+                    rotinaGlobal = bancoConversas[id].rotinaLocal;
+                    bancoConversas[id].historicoLocal.forEach(msg => {
+                        if (msg.role === "model") {
+                            extrairDadosTabela(msg.text);
+                        }
+                    });
+                });
+
+                // Carrega visualmente o chat ativo
+                alternarEntreConversasSalvas(conversaAtivaId);
+            }
+        }
+    } catch (error) {
+        console.error("Erro ao carregar histórico do banco:", error);
+    }
+}
+
 function renderizarGradeMensal(container) {
     const diasNoMes = 31; 
     const diasSemanaSiglas = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -327,7 +437,6 @@ function renderizarGradeMensal(container) {
             }).join('');
         }
 
-        // OnClick chama 'abrirDiaPeloMes' para fazer a transição de volta
         htmlDias += `
             <div class="month-day-cell ${temCompromisso ? 'has-event' : ''}" onclick="abrirDiaPeloMes('${diaSemanaCorrespondente}')">
                 <span class="day-number">${i}</span>
@@ -347,14 +456,17 @@ function renderizarGradeMensal(container) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const userId = localStorage.getItem("cyberplanner_user_id");
+    if (userId) {
+        carregarHistoricoDoBanco(userId);
+    }
     const btnLogout = document.getElementById("btn-logout");
     if (btnLogout) {
         btnLogout.addEventListener("click", () => {
-            localStorage.removeItem("cyberplanner_user_id");
-            localStorage.removeItem("cyberplanner_username");
-            window.location.href = "/login";
+            fazerLogout();
         });
     }
+    renderizarListaLateralCompleta();
 });
 
 function fazerLogout() {
@@ -363,10 +475,80 @@ function fazerLogout() {
     window.location.href = "/login";
 }
 
-// Captura do Enter para enviar a mensagem
-document.getElementById("user-input").addEventListener("keypress", function(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        enviarMensagem();
+function renderizarListaLateralCompleta() {
+    const listaContainer = document.getElementById("lista-conversas");
+    if (!listaContainer) return;
+    
+    listaContainer.innerHTML = ""; 
+
+    Object.keys(bancoConversas).forEach(id => {
+        const conversa = bancoConversas[id];
+        const isActive = (id === conversaAtivaId) ? "active" : "";
+
+        const item = document.createElement("div");
+        item.className = `conversa-item ${isActive}`;
+        item.innerHTML = conversa.titulo;
+        item.onclick = () => alternarEntreConversasSalvas(id);
+        
+        listaContainer.appendChild(item);
+    });
+}
+
+function alternarEntreConversasSalvas(idConvs) {
+    if (!bancoConversas[idConvs]) return;
+
+    conversaAtivaId = idConvs;
+    
+    // Vincula os ponteiros globais à estrutura interna do chat selecionado
+    historico = bancoConversas[idConvs].historicoLocal;
+    rotinaGlobal = bancoConversas[idConvs].rotinaLocal;
+
+    const chatBox = document.getElementById("chat-box");
+    if (!chatBox) return;
+    chatBox.innerHTML = "";
+
+    if (historico.length === 0) {
+        chatBox.innerHTML = `
+            <div class="message-row">
+                <div class="avatar ai">CP</div>
+                <div class="bubble ai-msg">Olá! Sou o <strong>CyberPlanner</strong>, seu gestor de rotina inteligente. Me conte seus compromissos, horários e preferências — vou organizar tudo sem conflitos e gerar sua tabela de rotina.</div>
+            </div>
+        `;
+    } else {
+        historico.forEach(msg => {
+            let conteudoHtml = msg.role === "model" ? marked.parse(msg.text) : escapeHtml(msg.text);
+            addRow(msg.role === "user" ? "user" : "model", conteudoHtml);
+        });
+    }
+
+    renderizarListaLateralCompleta();
+    renderizarCalendario();
+}
+
+// Executado ao clicar no botão "📝" da interface lateral
+function limparChatEmTela() {
+    // Cria um ID exclusivo temporal à prova de repetições
+    const novoChatId = "chat_" + Date.now();
+    const numeroProximo = Object.keys(bancoConversas).length + 1;
+
+    bancoConversas[novoChatId] = {
+        titulo: `✨ Nova conversa (${numeroProximo})`,
+        historicoLocal: [],
+        rotinaLocal: { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] }
+    };
+
+    alternarEntreConversasSalvas(novoChatId);
+}
+
+// Configuração do gatilho para a tecla Enter no input principal
+document.addEventListener("DOMContentLoaded", () => {
+    const inputElement = document.getElementById("user-input");
+    if (inputElement) {
+        inputElement.addEventListener("keypress", function(e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                enviarMensagem();
+            }
+        });
     }
 });

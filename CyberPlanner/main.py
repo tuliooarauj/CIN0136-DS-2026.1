@@ -5,12 +5,16 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 # Atualize seus imports do app.models
-from app.models import ChatInput, UserAuth, inicializar_banco, cadastrar_usuario, verificar_usuario
+from app.models import (
+    ChatInput, UserAuth, inicializar_banco, cadastrar_usuario, verificar_usuario,
+    criar_tabela_historico, salvar_mensagem_banco, buscar_historico_usuario, SalvarMensagemInput
+)
 from app.core import obter_resposta_ia
 
 app = FastAPI()
 
 inicializar_banco()
+criar_tabela_historico()
 
 # --- CONFIGURAÇÃO DE CORS ---
 app.add_middleware(
@@ -53,6 +57,16 @@ async def rota_login(dados: UserAuth):
         "user_id": usuario_id,
         "username": dados.username.strip()
     }
+
+@app.get("/chat/historico/{user_id}")
+async def obter_historico(user_id: int):
+    mensagens = buscar_historico_usuario(user_id)
+    return {"historico": mensagens}
+
+@app.post("/chat/salvar")
+async def salvar_mensagem(dados: SalvarMensagemInput):
+    salvar_mensagem_banco(dados.user_id, dados.role, dados.text)
+    return {"mensagem": "Mensagem salva com sucesso!"}
 # Rota do Chat
 @app.post("/chat")
 async def chat_proxy(dados: ChatInput):
