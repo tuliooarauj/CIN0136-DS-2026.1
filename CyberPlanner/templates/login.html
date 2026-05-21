@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberPlanner - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="login-icon">🗓</div>
+                <h2>CyberPlanner</h2>
+                <p>Gestor de Rotina com IA</p>
+            </div>
+            
+            <div class="input-group">
+                <label for="username">Utilizador</label>
+                <input type="text" id="username" placeholder="Digita o teu utilizador" autocomplete="off">
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" placeholder="Digita a tua senha">
+            </div>
+            
+            <div class="login-actions">
+                <button id="btn-entrar" class="btn-primary">Entrar</button>
+                <button id="btn-cadastrar" class="btn-secondary">Cadastrar</button>
+            </div>
+            
+            <p id="mensagem-erro" class="error-msg" style="display: none;"></p>
+        </div>
+    </div>
+
+    <script src="../static/js/login.js"></script>
+</body>
+</html>
