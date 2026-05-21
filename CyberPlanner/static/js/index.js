@@ -1,4 +1,7 @@
-// URL base da API — altera aqui se mudares a porta ou o host
+if (!localStorage.getItem("cyberplanner_user_id")) {
+    // Se não houver dados de login salvos, expulsa o utilizador para a página de login
+    window.location.href = "/login";
+}
 const API_URL = "http://localhost:8000/chat";
 
 // Histórico da conversa mantido no frontend
@@ -341,6 +344,23 @@ function renderizarGradeMensal(container) {
             <div class="month-grid-cells">${htmlDias}</div>
         </div>
     `;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => {
+            localStorage.removeItem("cyberplanner_user_id");
+            localStorage.removeItem("cyberplanner_username");
+            window.location.href = "/login";
+        });
+    }
+});
+
+function fazerLogout() {
+    localStorage.removeItem("cyberplanner_user_id");
+    localStorage.removeItem("cyberplanner_username");
+    window.location.href = "/login";
 }
 
 // Captura do Enter para enviar a mensagem
