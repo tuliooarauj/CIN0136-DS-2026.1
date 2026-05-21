@@ -4,11 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-# Importamos o que criamos nos outros arquivos
-from app.models import ChatInput
+# Atualize seus imports do app.models
+from app.models import ChatInput, UserAuth, inicializar_banco, cadastrar_usuario, verificar_usuario
 from app.core import obter_resposta_ia
 
 app = FastAPI()
+
+inicializar_banco()
 
 # --- CONFIGURAÇÃO DE CORS ---
 app.add_middleware(
@@ -19,18 +21,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- ARQUIVOS ESTÁTICOS E HTML ---
-# Isso faz o link com as pastas que você criou
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Rota para abrir o site no navegador
 @app.get("/")
 async def abrir_site(request: Request):
     return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
-    
-# Rota que o seu JavaScript (frontend) vai chamar
-@app.post("/chat")
+
+@app.get("/login")
+async def abrir_login(request: Request):
+    return templates.TemplateResponse(request=request, name="login.html", context={"request": request})
+
+# 🔐 ROTA DE CADASTRO
+@app.post("/cadastro")
+async def rota_cadastro(dados: UserAuth):
+    if not dados.username.strip() or not dados.password.strip():
+        raise HTTPException(status_code=400, detail="Usuário e senha não podem estar vazios.")
+    sucesso = cadastrar_usuario(dados.username.strip(), dados.password)
+    if not sucesso:
+        raise HTTPException(status_code=400, detail="Este nome de usuário já está em uso.")
+    return {"mensagem": "Usuário criado com sucesso!"}
+
+# 🔑 ROTA DE LOGIN
+@app.post("/login")
+async def rota_login(dados: UserAuth):
+    usuario_id = verificar_usuario(dados.username.strip(), dados.password)
+    if not usuario_id:
+        raise HTTPException(status_code=401, detail="Usuário ou senha incorretos.")
+    return {
+        "mensagem": "Login realizado!",
+        "user_id": usuario_id,
+        "username": dados.username.strip()
+    }
 # Rota do Chat
 @app.post("/chat")
 async def chat_proxy(dados: ChatInput):
