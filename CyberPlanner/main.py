@@ -26,7 +26,7 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/")
 async def abrir_site(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
+    return templates.TemplateResponse(request=request, name="page.html", context={"request": request})
 
 @app.get("/login")
 async def abrir_login(request: Request):
