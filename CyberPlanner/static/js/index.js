@@ -164,7 +164,8 @@ async function enviarMensagem() {
             body: JSON.stringify({
                 pergunta: pergunta,
                 historico: historico.slice(0, -1),
-                modo: "gestor"
+                modo: "gestor",
+                visualizacao: modoVisualizacao
             })
         });
 

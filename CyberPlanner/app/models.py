@@ -9,3 +9,4 @@ class ChatInput(BaseModel):
     pergunta: str
     historico: List[Mensagem] = []
     modo: str = "gestor"
+    modovisualizacao: str = "dia"
