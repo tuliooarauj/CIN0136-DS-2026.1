@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     document.getElementById("btn-entrar").addEventListener("click", autenticar);
-    document.getElementById("btn-cadastrar").addEventListener("click", registar);
+    document.getElementById("btn-cadastrar").addEventListener("click", registrar);
 });
 
 async function autenticar() {
@@ -42,7 +42,7 @@ async function autenticar() {
     }
 }
 
-async function registar() {
+async function registrar() {
     const user = document.getElementById("username").value;
     const pass = document.getElementById("password").value;
 

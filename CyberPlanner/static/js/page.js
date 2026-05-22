@@ -3,26 +3,12 @@ if (!localStorage.getItem("cyberplanner_user_id")) {
 }
 const API_URL = "http://localhost:8000/chat";
 
-// --- CONTROLE DE MÚLTIPLAS CONVERSAS EM MEMÓRIA (PRESERVADO) ---
-const bancoConversas = {}; 
-let conversaAtivaId = "chat_inicial";
+// Estrutura única e simplificada (Sem múltiplos chats)
+let historico = [];
+let rotinaGlobal = { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] };
 
-// Agora cada conversa possui suas rotinas semanais E seus eventos de dias específicos do mês
-bancoConversas[conversaAtivaId] = {
-    titulo: "✨ Conversa Atual",
-    historicoLocal: [], 
-    rotinaLocal: { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] },
-    eventosMensaisLocal: {} // Guarda compromissos por número do dia (ex: "25": [...])
-};
-
-let historico = bancoConversas[conversaAtivaId].historicoLocal;
-let rotinaGlobal = bancoConversas[conversaAtivaId].rotinaLocal;
-let eventosMensaisEspecificos = bancoConversas[conversaAtivaId].eventosMensaisLocal;
-
-// Inicializa a seleção com o dia numérico atual do sistema
-let diaSelecionadoNum = new Date().getDate(); 
+// Controle focado exclusivamente no dia da semana ativo
 let diaSelecionadoSemana = "Seg";
-let modoVisualizacao = "dia"; 
 
 function escapeHtml(text) {
     const div = document.createElement("div");
@@ -83,16 +69,8 @@ function descobrirDiasAlvo(texto) {
 function extrairDadosTabela(textoIA) {
     const linhas = textoIA.split("\n");
     const regexHorario = /(\d{2}[:h]\d{2})/g;
-    
-    // Verifica se a IA usou a marcação exclusiva de data isolada (ex: "Dia: 25")
-    let diaDoMesEspecifico = null;
-    const matchDia = textoIA.match(/Dia\s*:\s*(\d{1,2})/i);
-    if (matchDia) {
-        diaDoMesEspecifico = parseInt(matchDia[1]);
-    }
 
     let novasRotinasSemanais = {};
-    let tarefasColetadas = [];
     let contextoDiasSemana = [diaSelecionadoSemana]; 
     let bufferDeTexto = ""; 
 
@@ -119,36 +97,26 @@ function extrairDadosTabela(textoIA) {
                         atividade: colunas[1],
                         duracao: colunas[2] || ""
                     };
-                    tarefasColetadas.push(tarefa);
 
-                    if (!diaDoMesEspecifico) {
-                        contextoDiasSemana.forEach(dia => {
-                            if (!novasRotinasSemanais[dia]) novasRotinasSemanais[dia] = [];
-                            novasRotinasSemanais[dia].push(tarefa);
-                        });
-                    }
+                    contextoDiasSemana.forEach(dia => {
+                        if (!novasRotinasSemanais[dia]) novasRotinasSemanais[dia] = [];
+                        novasRotinasSemanais[dia].push(tarefa);
+                    });
                 }
             }
         }
     });
 
-    // Se for uma data isolada, aplica estritamente à gaveta do dia numérico
-    if (diaDoMesEspecifico && tarefasColetadas.length > 0) {
-        eventosMensaisEspecificos[diaDoMesEspecifico] = tarefasColetadas;
-        diaSelecionadoNum = diaDoMesEspecifico;
-    } else {
-        // Se for rotina semanal padrão, atualiza os dias da semana correspondentes
-        const diasAtualizados = Object.keys(novasRotinasSemanais);
-        if (diasAtualizados.length > 0) {
-            diasAtualizados.forEach(dia => {
-                rotinaGlobal[dia] = novasRotinasSemanais[dia];
-            });
-            diaSelecionadoSemana = diasAtualizados[0];
-            atualizarEstiloAbasSemana();
-        }
+    const diasAtualizados = Object.keys(novasRotinasSemanais);
+    if (diasAtualizados.length > 0) {
+        diasAtualizados.forEach(dia => {
+            rotinaGlobal[dia] = novasRotinasSemanais[dia];
+        });
+        diaSelecionadoSemana = diasAtualizados[0];
+        atualizarEstiloAbasSemana();
     }
     
-    renderizarCalendario();
+    renderizarRotinaSemanal();
 }
 
 function atualizarEstiloAbasSemana() {
@@ -191,9 +159,7 @@ async function enviarMensagem() {
 
     addRow("model", '<div class="typing-dots"><span></span><span></span><span></span></div>', true);
 
-    // Contexto de calendário injetado para orientar o Gemini
-    const dataHoje = new Date();
-    const contextoDataStr = `[Contexto: Hoje é ${dataHoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}. O usuário está focado no Dia ${diaSelecionadoNum}]. `;
+    const contextoDataStr = `[Contexto: O usuário está visualizando e editando a rotina de: ${diaSelecionadoSemana}]. `;
     const perguntaComContexto = contextoDataStr + perguntaOriginal;
 
     try {
@@ -204,7 +170,7 @@ async function enviarMensagem() {
                 pergunta: perguntaComContexto,
                 historico: historico.slice(0, -1),
                 modo: "gestor",
-                visualizacao: modoVisualizacao
+                visualizacao: "semana" 
             })
         });
 
@@ -248,38 +214,12 @@ function toggleCalendar() {
     const appLayout = document.querySelector('.app-layout');
     appLayout.classList.toggle('calendar-active');
     if (appLayout.classList.contains('calendar-active')) {
-        renderizarCalendario();
+        renderizarRotinaSemanal();
     }
-}
-
-function alternarVisualizacao(modo) {
-    modoVisualizacao = modo;
-    
-    document.getElementById('view-day-btn').classList.toggle('active', modo === 'dia');
-    document.getElementById('view-month-btn').classList.toggle('active', modo === 'mes');
-    
-    const tabsContainer = document.getElementById('days-tabs-container');
-    tabsContainer.style.display = (modo === 'dia') ? 'flex' : 'none';
-    
-    const appLayout = document.querySelector('.app-layout');
-    if (modo === 'mes') {
-        appLayout.classList.add('month-mode');
-    } else {
-        appLayout.classList.remove('month-mode');
-    }
-    renderizarCalendario();
 }
 
 function mudarDia(diaSigla, event) {
     diaSelecionadoSemana = diaSigla;
-    
-    // Mapeia de forma aproximada qual dia numérico corresponde ao clique na aba semanal
-    const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    const hoje = new Date();
-    let diferenca = diasSemana.indexOf(diaSigla) - hoje.getDay();
-    let dataAlvo = new Date(hoje);
-    dataAlvo.setDate(hoje.getDate() + diferenca);
-    diaSelecionadoNum = dataAlvo.getDate();
 
     const botoes = document.querySelectorAll('.days-tabs .tab-btn');
     botoes.forEach(btn => btn.classList.remove('active'));
@@ -289,39 +229,20 @@ function mudarDia(diaSigla, event) {
     } else {
         atualizarEstiloAbasSemana();
     }
-    renderizarCalendario();
+    renderizarRotinaSemanal();
 }
 
-function abrirDiaPeloMes(numeroDia, diaSemanaSigla) {
-    diaSelecionadoNum = parseInt(numeroDia);
-    diaSelecionadoSemana = diaSemanaSigla;
-    atualizarEstiloAbasSemana();
-    alternarVisualizacao('dia'); 
-}
-
-function renderizarCalendario() {
+function renderizarRotinaSemanal() {
     const container = document.getElementById('calendar-content-area');
     if (!container) return;
 
-    if (modoVisualizacao === "dia") {
-        renderizarLinhaDoTempo(container);
-    } else {
-        renderizarGradeMensal(container);
-    }
-}
+    let codingFixos = rotinaGlobal[diaSelecionadoSemana] || [];
+    codingFixos.sort((a, b) => a.horario.localeCompare(b.horario));
 
-function renderizarLinhaDoTempo(container) {
-    // Mescla a rotina padrão daquele dia da semana com algum evento isolado agendado para aquela data numérica
-    let eventosFixos = rotinaGlobal[diaSelecionadoSemana] || [];
-    let eventosIsolados = eventosMensaisEspecificos[diaSelecionadoNum] || [];
-    
-    let eventosMesclados = [...eventosFixos, ...eventosIsolados];
-    eventosMesclados.sort((a, b) => a.horario.localeCompare(b.horario));
-
-    if (eventosMesclados.length === 0) {
+    if (codingFixos.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Nenhuma atividade mapeada para o Dia ${diaSelecionadoNum} (${diaSelecionadoSemana}).</p>
+                <p>Nenhuma atividade mapeada para ${diaSelecionadoSemana}.</p>
             </div>
         `;
         return;
@@ -329,7 +250,7 @@ function renderizarLinhaDoTempo(container) {
     
     container.innerHTML = `
         <div class="calendar-timeline">
-            ${eventosMesclados.map(evento => {
+            ${codingFixos.map(evento => {
                 const atividadeMarkdown = marked.parseInline(evento.atividade);
                 return `
                     <div class="timeline-item">
@@ -348,140 +269,46 @@ function renderizarLinhaDoTempo(container) {
     `;
 }
 
-function renderizarGradeMensal(container) {
-    const diasNoMes = 31; 
-    const diasSemanaSiglas = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    
-    const mapearDiaSemana = (numeroDia) => {
-        const resto = numeroDia % 7;
-        if (resto === 1) return "Seg";
-        if (resto === 2) return "Ter";
-        if (resto === 3) return "Qua";
-        if (resto === 4) return "Qui";
-        if (resto === 5) return "Sex";
-        if (resto === 6) return "Sáb";
-        return "Dom";
-    };
-
-    let htmlGridHeaders = diasSemanaSiglas.map(d => `<div class="month-grid-header">${d}</div>`).join('');
-    let htmlDias = `<div class="month-day-cell empty" style="opacity: 0; pointer-events: none;"></div>`;
-
-    for (let i = 1; i <= diasNoMes; i++) {
-        const diaSemanaSigla = mapearDiaSemana(i);
-        
-        const tarefasFixas = rotinaGlobal[diaSemanaSigla] || [];
-        const tarefasIsoladas = eventosMensaisEspecificos[i] || [];
-        const todasDoDia = [...tarefasFixas, ...tarefasIsoladas];
-        const temCompromisso = todasDoDia.length > 0;
-
-        let previasHtml = "";
-        if (temCompromisso) {
-            previasHtml = todasDoDia.slice(0, 2).map(t => {
-                return `<div class="month-event-pill" title="${t.horario} - ${t.atividade}">${t.atividade}</div>`;
-            }).join('');
-        }
-
-        htmlDias += `
-            <div class="month-day-cell ${temCompromisso ? 'has-event' : ''}" onclick="abrirDiaPeloMes(${i}, '${diaSemanaSigla}')">
-                <span class="day-number">${i}</span>
-                <div class="month-events-container">
-                    ${previasHtml}
-                </div>
-            </div>
-        `;
-    }
-
-    container.innerHTML = `
-        <div class="month-view-container">
-            <div class="month-grid-days-labels">${htmlGridHeaders}</div>
-            <div class="month-grid-cells">${htmlDias}</div>
-        </div>
-    `;
-}
-
-function renderizarListaLateralCompleta() {
-    const listaContainer = document.getElementById("lista-conversas");
-    if (!listaContainer) return;
-    listaContainer.innerHTML = "";
-
-    Object.keys(bancoConversas).forEach(id => {
-        const item = document.createElement("div");
-        item.className = "conversa-item" + (id === conversaAtivaId ? " active" : "");
-        item.textContent = bancoConversas[id].titulo;
-        item.onclick = () => alternarEntreConversasSalvas(id);
-        listaContainer.appendChild(item);
-    });
-}
-
-function alternarEntreConversasSalvas(idAlvo) {
-    if (!bancoConversas[idAlvo]) return;
-    conversaAtivaId = idAlvo;
-
-    historico = bancoConversas[conversaAtivaId].historicoLocal;
-    rotinaGlobal = bancoConversas[conversaAtivaId].rotinaLocal;
-    eventosMensaisEspecificos = bancoConversas[conversaAtivaId].eventosMensaisLocal;
-
-    const chatBox = document.getElementById("chat-box");
-    if (chatBox) {
-        chatBox.innerHTML = "";
-        if (historico.length === 0) {
-            chatBox.innerHTML = `
-                <div class="message-row">
-                    <div class="avatar ai">CP</div>
-                    <div class="bubble ai-msg">Olá! Sou o <strong>CyberPlanner</strong>. Como posso organizar sua rotina ou agendar novos eventos hoje?</div>
-                </div>
-            `;
-        } else {
-            historico.forEach(msg => {
-                let conteudoHtml = msg.role === "model" ? marked.parse(msg.text) : escapeHtml(msg.text);
-                addRow(msg.role === "user" ? "user" : "model", conteudoHtml);
-            });
-        }
-    }
-    renderizarListaLateralCompleta();
-    renderizarCalendario();
-}
-
-function limparChatEmTela() {
-    const novoChatId = "chat_" + Date.now();
-    const numeroProximo = Object.keys(bancoConversas).length + 1;
-
-    bancoConversas[novoChatId] = {
-        titulo: `✨ Nova conversa (${numeroProximo})`,
-        historicoLocal: [],
-        rotinaLocal: { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] },
-        eventosMensaisLocal: {}
-    };
-
-    alternarEntreConversasSalvas(novoChatId);
-}
-
 async function carregarHistoricoDoBanco(userId) {
     try {
         const response = await fetch(`/chat/historico/${userId}`);
         if (response.ok) {
             const data = await response.json();
             if (data.historico && data.historico.length > 0) {
-                bancoConversas[conversaAtivaId].historicoLocal = [];
-                bancoConversas[conversaAtivaId].rotinaLocal = { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] };
-                bancoConversas[conversaAtivaId].eventosMensaisLocal = {};
-                
-                historico = bancoConversas[conversaAtivaId].historicoLocal;
-                rotinaGlobal = bancoConversas[conversaAtivaId].rotinaLocal;
-                eventosMensaisEspecificos = bancoConversas[conversaAtivaId].eventosMensaisLocal;
+                // Limpa os estados locais antes de repopular
+                historico = [];
+                rotinaGlobal = { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] };
+
+                const chatBox = document.getElementById("chat-box");
+                if (chatBox) chatBox.innerHTML = "";
 
                 data.historico.forEach((msg) => {
                     historico.push({ role: msg.role, text: msg.text });
+                    
+                    let conteudoHtml = msg.role === "model" ? marked.parse(msg.text) : escapeHtml(msg.text);
+                    addRow(msg.role === "user" ? "user" : "model", conteudoHtml);
+
                     if (msg.role === "model") {
                         extrairDadosTabela(msg.text);
                     }
                 });
-                alternarEntreConversasSalvas(conversaAtivaId);
+            } else {
+                // Caso não possua histórico no banco, exibe a mensagem de boas-vindas padrão
+                const chatBox = document.getElementById("chat-box");
+                if (chatBox) {
+                    chatBox.innerHTML = `
+                        <div class="message-row">
+                            <div class="avatar ai">CP</div>
+                            <div class="bubble ai-msg">Olá! Sou o <strong>CyberPlanner</strong>. Como posso organizar sua rotina semanal hoje?</div>
+                        </div>
+                    `;
+                }
             }
         }
     } catch (error) {
         console.error("Erro ao carregar histórico:", error);
     }
+    renderizarRotinaSemanal();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -500,5 +327,4 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     atualizarEstiloAbasSemana();
-    renderizarListaLateralCompleta();
 });

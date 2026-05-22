@@ -31,20 +31,18 @@ PERSONALIDADES = {
 
 FORMA_VISUALIZACAO = {
     "dia": " Cyberplanner, quero que você organize o meu cronograma focado apenas no meu dia, baseado no que eu mandei para você.",
-    "semana": " Cyberplanner, quero que monte o cronograma do meu dia e distribua esse planejamento ao longo da minha semana. Caso eu queira mudar algo, adapte o dia especificado.",
-    "mes": " Cyberplanner, quero que monte uma visão macro e distribua esse cronograma pelas semanas do meu mês, focando em metas de longo prazo."
+    "semana": " Cyberplanner, quero que monte o cronograma do meu dia e distribua esse planejamento ao longo da minha semana. Caso eu queira mudar algo, adapte o dia especificado."
 }
 
 def obter_resposta_ia(pergunta: str, historico: list, modo: str, visualizacao: str):
     # Procura a personalidade (ex: "gestor")
     instrucao = PERSONALIDADES.get(modo, PERSONALIDADES["gestor"])
 
-    # 3. Junta a instrução da personalidade com a regra da visualização atual
+    # Junta a instrução da personalidade com a regra da visualização atual
     # Usamos o .get() com fallback para "dia" por segurança, caso venha algo malformado
     regra_visualizacao = FORMA_VISUALIZACAO.get(visualizacao, FORMA_VISUALIZACAO["dia"])
     instrucao += regra_visualizacao
 
-    # --- Daqui para baixo o código continua exatamente igual ao da foto ---
     # Prepara o histórico para o formato do Gemini
     contents = []
     for msg in historico:
