@@ -316,48 +316,6 @@ body {
 }
 
 
-.sidebar-historico {
-    flex: 0 0 260px;    /* Mantém a largura ideal para o menu de conversas */
-    background-color: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    padding: 15px;
-    height: 100vh;
-    overflow-y: auto;
-    box-sizing: border-box;
-}
-
-.sidebar-historico-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #26262b;
-}
-
-.sidebar-historico-header h3 {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.9rem;
-    color: #ffe600; /* Amarelo CyberPlanner */
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-#btn-novo-chat {
-    background: transparent;
-    border: none;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-#btn-novo-chat:hover {
-    transform: scale(1.1);
-}
-
 .lista-conversas {
     display: flex;
     flex-direction: column;
