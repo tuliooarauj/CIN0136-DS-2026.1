@@ -31,12 +31,11 @@ def test_rota_chat_com_mock(mock_ia):
     mock_ia.return_value = "Sua rotina foi organizada com sucesso!"
 
     # Disparamos a mensagem como se fôssemos o arquivo index.js do frontend
-    dados_enviados = {"pergunta": "Organize minha tarde", "historico": [], "modo": "gestor"}
+    dados_enviados = {"pergunta": "Organize minha tarde", "historico": [], "modo": "gestor", "visualizacao": "dia"}
     response = client.post("/chat", json=dados_enviados)
 
     # Garantimos que o servidor não deu erro (200) e que devolveu a resposta falsa da IA
     assert response.status_code == 200
     assert response.json() == {
         "resposta": "Sua rotina foi organizada com sucesso!",
-        "modo_usado": "gestor"
     }
