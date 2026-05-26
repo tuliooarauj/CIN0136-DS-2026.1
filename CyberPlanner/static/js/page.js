@@ -327,4 +327,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     atualizarEstiloAbasSemana();
+
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", function() {
+            // Limpa os dados do usuário salvos no navegador
+            localStorage.removeItem("cyberplanner_user_id");
+            localStorage.removeItem("cyberplanner_username");
+            
+            // Redireciona de volta para a tela de login
+            window.location.href = "/login";
+        });
+    }
 });

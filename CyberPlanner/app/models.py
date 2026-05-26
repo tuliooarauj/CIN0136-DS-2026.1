@@ -10,7 +10,7 @@ class ChatInput(BaseModel):
     pergunta: str
     historico: List[Mensagem] = []
     modo: str = "gestor"
-    modovisualizacao: str = "dia"
+    visualizacao: str = "dia"
     
 class UserAuth(BaseModel):
     username: str
@@ -18,6 +18,7 @@ class UserAuth(BaseModel):
 
 class SalvarMensagemInput(BaseModel):
     user_id: int
+    sessao_id: str  
     role: str
     text: str
 
