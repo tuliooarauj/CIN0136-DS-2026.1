@@ -1,6 +1,3 @@
-if (!localStorage.getItem("cyberplanner_user_id")) {
-    window.location.href = "/login";
-}
 const API_URL = "http://localhost:8000/chat";
 
 // Estrutura única e simplificada (Sem múltiplos chats)
@@ -275,7 +272,6 @@ async function carregarHistoricoDoBanco(userId) {
         if (response.ok) {
             const data = await response.json();
             if (data.historico && data.historico.length > 0) {
-                // Limpa os estados locais antes de repopular
                 historico = [];
                 rotinaGlobal = { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] };
 
@@ -293,7 +289,6 @@ async function carregarHistoricoDoBanco(userId) {
                     }
                 });
             } else {
-                // Caso não possua histórico no banco, exibe a mensagem de boas-vindas padrão
                 const chatBox = document.getElementById("chat-box");
                 if (chatBox) {
                     chatBox.innerHTML = `
@@ -311,12 +306,41 @@ async function carregarHistoricoDoBanco(userId) {
     renderizarRotinaSemanal();
 }
 
+function renderizarListaLateralCompleta() {
+    console.log("Lista lateral atualizada.");
+}
+
+// Função global de logout chamada direto pelo HTML
+function fazerLogout() {
+    localStorage.removeItem("cyberplanner_user_id");
+    localStorage.removeItem("cyberplanner_username");
+    window.location.href = "/login";
+}
+
+// Evento Único de Inicialização da Página
 document.addEventListener("DOMContentLoaded", () => {
     const userId = localStorage.getItem("cyberplanner_user_id");
-    if (userId) {
-        carregarHistoricoDoBanco(userId);
+    
+    // Proteção de rota segura: se NÃO houver utilizador, manda para o login e mata o resto do script
+    if (!userId) {
+        window.location.href = "/login";
+        return; 
+    }
+
+    // Se houver utilizador, carrega o histórico normalmente
+    carregarHistoricoDoBanco(userId);
+
+    // Configuração correta do botão de Logout
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => {
+            localStorage.removeItem("cyberplanner_user_id");
+            localStorage.removeItem("cyberplanner_username");
+            window.location.href = "/login";
+        });
     }
     
+    // Configuração do campo de texto (Enviar com Enter)
     const inputElement = document.getElementById("user-input");
     if (inputElement) {
         inputElement.addEventListener("keypress", function(e) {
@@ -326,5 +350,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    renderizarListaLateralCompleta();
     atualizarEstiloAbasSemana();
 });
