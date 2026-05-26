@@ -1,15 +1,14 @@
-// URL base da API — altera aqui se mudares a porta ou o host
+if (!localStorage.getItem("cyberplanner_user_id")) {
+    window.location.href = "/login";
+}
 const API_URL = "http://localhost:8000/chat";
 
-// Histórico da conversa mantido no frontend
-const historico = [];
+// Estrutura única e simplificada (Sem múltiplos chats)
+let historico = [];
+let rotinaGlobal = { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] };
 
-// Base de dados em memória separada por dia da semana
-let rotinaGlobal = {
-    Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: []
-};
-let diaSelecionado = "Seg";
-let modoVisualizacao = "dia"; // "dia" ou "mes"
+// Controle focado exclusivamente no dia da semana ativo
+let diaSelecionadoSemana = "Seg";
 
 function escapeHtml(text) {
     const div = document.createElement("div");
@@ -19,6 +18,7 @@ function escapeHtml(text) {
 
 function addRow(role, htmlContent, isTyping = false) {
     const chatBox = document.getElementById("chat-box");
+    if (!chatBox) return null;
     const isUser = role === "user";
 
     const row = document.createElement("div");
@@ -40,12 +40,10 @@ function addRow(role, htmlContent, isTyping = false) {
     return row;
 }
 
-// Analisador Inteligente Estrito (Só retorna os dias se realmente encontrar no texto)
 function descobrirDiasAlvo(texto) {
     const textoMinusculo = texto.toLowerCase();
     let diasAlvo = [];
 
-    // 1º Passo: Procura por dias específicos explicitamente declarados
     if (textoMinusculo.includes("segunda") || textoMinusculo.includes("seg-")) diasAlvo.push("Seg");
     if (textoMinusculo.includes("terça") || textoMinusculo.includes("ter-")) diasAlvo.push("Ter");
     if (textoMinusculo.includes("quarta") || textoMinusculo.includes("qua-")) diasAlvo.push("Qua");
@@ -54,9 +52,6 @@ function descobrirDiasAlvo(texto) {
     if (textoMinusculo.includes("sábado") || textoMinusculo.includes("sabado") || textoMinusculo.includes("sáb-")) diasAlvo.push("Sáb");
     if (textoMinusculo.includes("domingo") || textoMinusculo.includes("dom-")) diasAlvo.push("Dom");
 
-    // O SEGREDO ESTÁ AQUI: 
-    // Só tenta adivinhar por palavras genéricas se NÃO achou dias específicos!
-    // Isso evita que a IA bagunce tudo se disser "Rotina para a semana e fim de semana. Dias: Seg a Sex."
     if (diasAlvo.length === 0) {
         if (textoMinusculo.includes("fim de semana") || textoMinusculo.includes("final de semana")) {
             return ["Sáb", "Dom"];
@@ -68,67 +63,60 @@ function descobrirDiasAlvo(texto) {
             return ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
         }
     }
-
     return diasAlvo;
 }
-// Leitor de Contexto: Associa a tabela ao título/texto que veio logo antes dela
+
 function extrairDadosTabela(textoIA) {
     const linhas = textoIA.split("\n");
     const regexHorario = /(\d{2}[:h]\d{2})/g;
-    
-    let novasRotinas = {}; // Guarda separadinho o que é de cada dia
-    let contextoDias = [diaSelecionado]; // Fallback: se não falar nada, vai para o dia atual
-    let bufferDeTexto = ""; // Acumula os títulos como "### Sábado e Domingo"
+
+    let novasRotinasSemanais = {};
+    let contextoDiasSemana = [diaSelecionadoSemana]; 
+    let bufferDeTexto = ""; 
 
     linhas.forEach(linha => {
         const isTableRow = linha.includes("|") && !linha.includes("---");
         
         if (!linha.includes("|") && linha.trim() !== "") {
-            // Não é tabela. Então é um texto de contexto. Guarda-o!
             bufferDeTexto += " " + linha;
         } else if (isTableRow) {
-            // Começou uma tabela! Vamos ver a quem pertence...
             if (bufferDeTexto.trim() !== "") {
                 const diasDetectados = descobrirDiasAlvo(bufferDeTexto);
                 if (diasDetectados.length > 0) {
-                    contextoDias = diasDetectados; // Atualiza o "alvo" para esta tabela
+                    contextoDiasSemana = diasDetectados; 
                 }
-                bufferDeTexto = ""; // Limpa a memória para a próxima tabela não herdar os dias errados
+                bufferDeTexto = ""; 
             }
 
-            // Lê a linha da tabela e coloca nos dias certos
             const colunas = linha.split("|").map(c => c.trim()).filter(c => c !== "");
             if (colunas.length >= 2) {
                 const temHorario = colunas[0].match(regexHorario);
                 if (temHorario && !colunas[0].toLowerCase().includes("horário")) {
-                    
                     const tarefa = {
                         horario: colunas[0],
                         atividade: colunas[1],
                         duracao: colunas[2] || ""
                     };
-                    
-                    contextoDias.forEach(dia => {
-                        if (!novasRotinas[dia]) novasRotinas[dia] = [];
-                        novasRotinas[dia].push(tarefa);
+
+                    contextoDiasSemana.forEach(dia => {
+                        if (!novasRotinasSemanais[dia]) novasRotinasSemanais[dia] = [];
+                        novasRotinasSemanais[dia].push(tarefa);
                     });
                 }
             }
         }
     });
 
-    // Terminou de ler tudo? Pega no que encontrou e atualiza o calendário oficial
-    const diasAtualizados = Object.keys(novasRotinas);
+    const diasAtualizados = Object.keys(novasRotinasSemanais);
     if (diasAtualizados.length > 0) {
         diasAtualizados.forEach(dia => {
-            rotinaGlobal[dia] = novasRotinas[dia];
+            rotinaGlobal[dia] = novasRotinasSemanais[dia];
         });
-        
-        // Foca automaticamente no primeiro dia que foi atualizado
-        diaSelecionado = diasAtualizados[0];
+        diaSelecionadoSemana = diasAtualizados[0];
         atualizarEstiloAbasSemana();
-        renderizarCalendario();
     }
+    
+    renderizarRotinaSemanal();
 }
 
 function atualizarEstiloAbasSemana() {
@@ -136,7 +124,7 @@ function atualizarEstiloAbasSemana() {
     const diasSiglas = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
     
     botoes.forEach((btn, index) => {
-        if (diasSiglas[index] === diaSelecionado) {
+        if (diasSiglas[index] === diaSelecionadoSemana) {
             btn.classList.add('active');
         } else {
             btn.classList.remove('active');
@@ -147,29 +135,46 @@ function atualizarEstiloAbasSemana() {
 async function enviarMensagem() {
     const inputField = document.getElementById("user-input");
     const sendBtn   = document.getElementById("send-btn");
-    const pergunta  = inputField.value.trim();
-    if (!pergunta) return;
+    if (!inputField || !sendBtn) return;
+    
+    const perguntaOriginal = inputField.value.trim();
+    if (!perguntaOriginal) return;
 
-    addRow("user", escapeHtml(pergunta));
-    historico.push({ role: "user", text: pergunta });
+    addRow("user", escapeHtml(perguntaOriginal));
+    historico.push({ role: "user", text: perguntaOriginal });
     inputField.value = "";
     sendBtn.disabled = true;
+    
+    const userId = localStorage.getItem("cyberplanner_user_id");
+    
+    fetch("/chat/salvar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: parseInt(userId),
+            role: "user",
+            text: perguntaOriginal
+        })
+    }).catch(err => console.error("Erro ao salvar pergunta no banco:", err));
 
     addRow("model", '<div class="typing-dots"><span></span><span></span><span></span></div>', true);
+
+    const contextoDataStr = `[Contexto: O usuário está visualizando e editando a rotina de: ${diaSelecionadoSemana}]. `;
+    const perguntaComContexto = contextoDataStr + perguntaOriginal;
 
     try {
         const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                pergunta: pergunta,
+                pergunta: perguntaComContexto,
                 historico: historico.slice(0, -1),
-                modo: "gestor"
+                modo: "gestor",
+                visualizacao: "semana" 
             })
         });
 
         const data = await response.json();
-
         const typingRow = document.getElementById("typing-row");
         if (typingRow) typingRow.remove();
 
@@ -181,7 +186,16 @@ async function enviarMensagem() {
             addRow("model", respostaHtml);
             historico.push({ role: "model", text: data.resposta });
             
-            // Tenta ler e atualizar o calendário lateral com as tabelas recebidas
+            fetch("/chat/salvar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id: parseInt(userId),
+                    role: "model",
+                    text: data.resposta
+                })
+            }).catch(err => console.error("Erro ao salvar resposta no banco:", err));
+            
             extrairDadosTabela(data.resposta);
         }
 
@@ -196,40 +210,17 @@ async function enviarMensagem() {
     inputField.focus();
 }
 
-// ── CONTROLADORES DO CALENDÁRIO LATERAL ──
-
 function toggleCalendar() {
     const appLayout = document.querySelector('.app-layout');
     appLayout.classList.toggle('calendar-active');
-    
     if (appLayout.classList.contains('calendar-active')) {
-        renderizarCalendario();
+        renderizarRotinaSemanal();
     }
 }
 
-function alternarVisualizacao(modo) {
-    modoVisualizacao = modo;
-    
-    document.getElementById('view-day-btn').classList.toggle('active', modo === 'dia');
-    document.getElementById('view-month-btn').classList.toggle('active', modo === 'mes');
-    
-    const tabsContainer = document.getElementById('days-tabs-container');
-    tabsContainer.style.display = (modo === 'dia') ? 'flex' : 'none';
-    
-    // Adiciona a classe 'month-mode' que aciona a animação de ocultar o chat e expandir o calendário
-    const appLayout = document.querySelector('.app-layout');
-    if (modo === 'mes') {
-        appLayout.classList.add('month-mode');
-    } else {
-        appLayout.classList.remove('month-mode');
-    }
-    
-    renderizarCalendario();
-}
+function mudarDia(diaSigla, event) {
+    diaSelecionadoSemana = diaSigla;
 
-function mudarDia(dia, event) {
-    diaSelecionado = dia;
-    
     const botoes = document.querySelectorAll('.days-tabs .tab-btn');
     botoes.forEach(btn => btn.classList.remove('active'));
     
@@ -238,35 +229,20 @@ function mudarDia(dia, event) {
     } else {
         atualizarEstiloAbasSemana();
     }
-    
-    renderizarCalendario();
+    renderizarRotinaSemanal();
 }
 
-// Clicar no dia do mês volta para o chat e seleciona a aba correta
-function abrirDiaPeloMes(dia) {
-    mudarDia(dia); // Atualiza a aba selecionada (ex: "Ter")
-    alternarVisualizacao('dia'); // Volta o modo, o que traz o chat de volta ao ecrã
-}
-
-function renderizarCalendario() {
+function renderizarRotinaSemanal() {
     const container = document.getElementById('calendar-content-area');
     if (!container) return;
 
-    if (modoVisualizacao === "dia") {
-        renderizarLinhaDoTempo(container);
-    } else {
-        renderizarGradeMensal(container);
-    }
-}
+    let codingFixos = rotinaGlobal[diaSelecionadoSemana] || [];
+    codingFixos.sort((a, b) => a.horario.localeCompare(b.horario));
 
-function renderizarLinhaDoTempo(container) {
-    const eventos = rotinaGlobal[diaSelecionado];
-    
-    if (!eventos || eventos.length === 0) {
+    if (codingFixos.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Nenhuma atividade mapeada para este dia (${diaSelecionado}).</p>
-                <span>Define a tua rotina no chat para o CyberPlanner a organizar aqui.</span>
+                <p>Nenhuma atividade mapeada para ${diaSelecionadoSemana}.</p>
             </div>
         `;
         return;
@@ -274,7 +250,7 @@ function renderizarLinhaDoTempo(container) {
     
     container.innerHTML = `
         <div class="calendar-timeline">
-            ${eventos.map(evento => {
+            ${codingFixos.map(evento => {
                 const atividadeMarkdown = marked.parseInline(evento.atividade);
                 return `
                     <div class="timeline-item">
@@ -293,59 +269,62 @@ function renderizarLinhaDoTempo(container) {
     `;
 }
 
-function renderizarGradeMensal(container) {
-    const diasNoMes = 31; 
-    const diasSemanaSiglas = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    
-    const mapearDiaSemana = (numeroDia) => {
-        const resto = numeroDia % 7;
-        if (resto === 1) return "Seg";
-        if (resto === 2) return "Ter";
-        if (resto === 3) return "Qua";
-        if (resto === 4) return "Qui";
-        if (resto === 5) return "Sex";
-        if (resto === 6) return "Sáb";
-        return "Dom";
-    };
+async function carregarHistoricoDoBanco(userId) {
+    try {
+        const response = await fetch(`/chat/historico/${userId}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.historico && data.historico.length > 0) {
+                // Limpa os estados locais antes de repopular
+                historico = [];
+                rotinaGlobal = { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] };
 
-    let htmlGridHeaders = diasSemanaSiglas.map(d => `<div class="month-grid-header">${d}</div>`).join('');
-    let htmlDias = `<div class="month-day-cell empty" style="opacity: 0; pointer-events: none;"></div>`;
+                const chatBox = document.getElementById("chat-box");
+                if (chatBox) chatBox.innerHTML = "";
 
-    for (let i = 1; i <= diasNoMes; i++) {
-        const diaSemanaCorrespondente = mapearDiaSemana(i);
-        const tarefasDoDia = rotinaGlobal[diaSemanaCorrespondente] || [];
-        const temCompromisso = tarefasDoDia.length > 0;
+                data.historico.forEach((msg) => {
+                    historico.push({ role: msg.role, text: msg.text });
+                    
+                    let conteudoHtml = msg.role === "model" ? marked.parse(msg.text) : escapeHtml(msg.text);
+                    addRow(msg.role === "user" ? "user" : "model", conteudoHtml);
 
-        let previasHtml = "";
-        if (temCompromisso) {
-            previasHtml = tarefasDoDia.slice(0, 3).map(t => {
-                return `<div class="month-event-pill" title="${t.horario} - ${t.atividade}">${t.atividade}</div>`;
-            }).join('');
+                    if (msg.role === "model") {
+                        extrairDadosTabela(msg.text);
+                    }
+                });
+            } else {
+                // Caso não possua histórico no banco, exibe a mensagem de boas-vindas padrão
+                const chatBox = document.getElementById("chat-box");
+                if (chatBox) {
+                    chatBox.innerHTML = `
+                        <div class="message-row">
+                            <div class="avatar ai">CP</div>
+                            <div class="bubble ai-msg">Olá! Sou o <strong>CyberPlanner</strong>. Como posso organizar sua rotina semanal hoje?</div>
+                        </div>
+                    `;
+                }
+            }
         }
-
-        // OnClick chama 'abrirDiaPeloMes' para fazer a transição de volta
-        htmlDias += `
-            <div class="month-day-cell ${temCompromisso ? 'has-event' : ''}" onclick="abrirDiaPeloMes('${diaSemanaCorrespondente}')">
-                <span class="day-number">${i}</span>
-                <div class="month-events-container">
-                    ${previasHtml}
-                </div>
-            </div>
-        `;
+    } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
     }
-
-    container.innerHTML = `
-        <div class="month-view-container">
-            <div class="month-grid-days-labels">${htmlGridHeaders}</div>
-            <div class="month-grid-cells">${htmlDias}</div>
-        </div>
-    `;
+    renderizarRotinaSemanal();
 }
 
-// Captura do Enter para enviar a mensagem
-document.getElementById("user-input").addEventListener("keypress", function(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        enviarMensagem();
+document.addEventListener("DOMContentLoaded", () => {
+    const userId = localStorage.getItem("cyberplanner_user_id");
+    if (userId) {
+        carregarHistoricoDoBanco(userId);
     }
+    
+    const inputElement = document.getElementById("user-input");
+    if (inputElement) {
+        inputElement.addEventListener("keypress", function(e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                enviarMensagem();
+            }
+        });
+    }
+    atualizarEstiloAbasSemana();
 });

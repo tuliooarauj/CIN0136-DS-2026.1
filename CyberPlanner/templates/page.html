@@ -6,7 +6,7 @@
     <title>CyberPlanner - IA</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="../static/css/page.css">
 </head>
 <body>
 
@@ -18,7 +18,8 @@
                 <h1>CyberPlanner</h1>
                 <p>Gestor de Rotina com IA</p>
             </div>
-            <button id="toggle-calendar-btn" onclick="toggleCalendar()" title="Ver Calendário">📅</button>
+            <button id="toggle-calendar-btn" onclick="toggleCalendar()" title="Ver Calendário">📅</button> 
+            <button id="btn-logout" class="btn-logout">Sair</button>
             <div class="status-dot" title="Online"></div>
         </div>
 
@@ -43,7 +44,6 @@
                 <h2>Calendário de Rotinas</h2>
                 <div class="view-switcher">
                     <button id="view-day-btn" class="switch-btn active" onclick="alternarVisualizacao('dia')">Dia</button>
-                    <button id="view-month-btn" class="switch-btn" onclick="alternarVisualizacao('mes')">Mês</button>
                 </div>
             </div>
             
@@ -59,12 +59,12 @@
         </div>
         
         <div class="calendar-body">
-            <div id="calendar-content-area">
-                </div>
+            <div id="calendar-content-area"></div>
         </div>
     </div>
 </div>
 
-<script src="../static/js/index.js"></script>
+
+<script src="../static/js/page.js"></script>
 </body>
 </html>
