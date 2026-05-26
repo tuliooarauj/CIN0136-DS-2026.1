@@ -146,6 +146,7 @@ async function enviarMensagem() {
     sendBtn.disabled = true;
     
     const userId = localStorage.getItem("cyberplanner_user_id");
+    const sessaoId = localStorage.getItem("cyberplanner_sessao_id");
     
     fetch("/chat/salvar", {
         method: "POST",
@@ -191,6 +192,7 @@ async function enviarMensagem() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     user_id: parseInt(userId),
+                    sessao_id: sessaoId,
                     role: "model",
                     text: data.resposta
                 })
@@ -271,6 +273,7 @@ function renderizarRotinaSemanal() {
 
 async function carregarHistoricoDoBanco(userId) {
     try {
+        const sessaoId = localStorage.getItem("cyberplanner_sessao_id");
         const response = await fetch(`/chat/historico/${userId}`);
         if (response.ok) {
             const data = await response.json();

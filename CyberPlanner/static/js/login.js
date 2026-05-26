@@ -31,6 +31,8 @@ async function autenticar() {
             // CONTEXTO DE ESTADO: Guardamos as informações no browser
             localStorage.setItem("cyberplanner_user_id", data.user_id);
             localStorage.setItem("cyberplanner_username", data.username);
+
+            localStorage.setItem("cyberplanner_sessao_id", crypto.randomUUID());
             
             // Redireciona para a página principal (dashboard)
             window.location.href = "/";

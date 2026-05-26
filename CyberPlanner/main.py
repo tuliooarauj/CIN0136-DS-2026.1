@@ -59,13 +59,13 @@ async def rota_login(dados: UserAuth):
     }
 
 @app.get("/chat/historico/{user_id}")
-async def obter_historico(user_id: int):
-    mensagens = buscar_historico_usuario(user_id)
+async def obter_historico(user_id: int, sessao_id: str):
+    mensagens = buscar_historico_usuario(user_id,sessao_id)
     return {"historico": mensagens}
 
 @app.post("/chat/salvar")
 async def salvar_mensagem(dados: SalvarMensagemInput):
-    salvar_mensagem_banco(dados.user_id, dados.role, dados.text)
+    salvar_mensagem_banco(dados.user_id, dados.sessao_id, dados.role, dados.text)
     return {"mensagem": "Mensagem salva com sucesso!"}
 # Rota do Chat
 @app.post("/chat")
