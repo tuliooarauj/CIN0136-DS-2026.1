@@ -18,6 +18,16 @@ async function autenticar() {
         return;
     }
 
+    if (!user.includes("@") || !user.includes(".")) {
+        mostrarErro("Por favor, insira um e-mail válido.");
+        return;
+    }
+
+    if (pass.length < 6) {
+        mostrarErro("A senha deve ter pelo menos 6 caracteres.");
+        return;
+    }
+
     try {
         const response = await fetch("/login", {
             method: "POST",
@@ -35,7 +45,11 @@ async function autenticar() {
             // Redireciona para a página principal (dashboard)
             window.location.href = "/";
         } else {
-            mostrarErro(data.detail || "Erro ao fazer login.");
+            let mensagemErro = data.detail;
+            if (Array.isArray(mensagemErro)) {
+                mensagemErro = "O formato do e-mail ou a senha são inválidos.";
+            }
+            mostrarErro(mensagemErro || "Erro ao fazer login.");
         }
     } catch (error) {
         mostrarErro("Erro ao conectar ao servidor.");
@@ -48,6 +62,16 @@ async function registrar() {
 
     if (!user || !pass) {
         mostrarErro("Preenche os campos para fazer o cadastro.");
+        return;
+    }
+
+    if (!user.includes("@") || !user.includes(".")) {
+        mostrarErro("Por favor, insira um e-mail válido.");
+        return;
+    }
+
+    if (pass.length < 6) {
+        mostrarErro("A senha deve ter pelo menos 6 caracteres.");
         return;
     }
 
@@ -64,7 +88,11 @@ async function registrar() {
             alert("Cadastro realizado com sucesso! Agora clica em Entrar.");
             document.getElementById("mensagem-erro").style.display = "none";
         } else {
-            mostrarErro(data.detail || "Erro ao fazer cadastro.");
+            let mensagemErro = data.detail;
+            if (Array.isArray(mensagemErro)) {
+                mensagemErro = "O formato do e-mail ou a senha são inválidos.";
+            }
+            mostrarErro(mensagemErro || "Erro ao fazer login.");
         }
     } catch (error) {
         mostrarErro("Erro ao conectar ao servidor.");
@@ -73,6 +101,6 @@ async function registrar() {
 
 function mostrarErro(mensagem) {
     const erroTxt = document.getElementById("mensagem-erro");
-    erroTxt.innerText = "⚠️ " + mensagem;
+    erroTxt.innerText = mensagem;
     erroTxt.style.display = "block";
 }

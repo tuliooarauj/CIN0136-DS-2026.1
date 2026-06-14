@@ -13,9 +13,13 @@ class ChatInput(BaseModel):
     modovisualizacao: str = "dia"
     
 class UserAuth(BaseModel):
-    username: str
-    password: str
-
+    username: str = Field(
+        ..., 
+        pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", 
+        description="O usuário deve ser um e-mail válido"
+    )
+    password: str = Field(..., min_length=6, description="A senha deve ter no mínimo 6 caracteres")
+    
 class SalvarMensagemInput(BaseModel):
     user_id: int
     role: str
