@@ -140,6 +140,10 @@ async function enviarMensagem() {
     addRow("user", escapeHtml(perguntaOriginal));
     historico.push({ role: "user", text: perguntaOriginal });
     inputField.value = "";
+    
+    const charCounter = document.getElementById("char-counter");
+    if (charCounter) charCounter.textContent = "0/600";
+
     sendBtn.disabled = true;
     
     const userId = localStorage.getItem("cyberplanner_user_id");
@@ -342,11 +346,17 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Configuração do campo de texto (Enviar com Enter)
     const inputElement = document.getElementById("user-input");
-    if (inputElement) {
-        inputElement.addEventListener("keypress", function(e) {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                enviarMensagem();
+    const charCounter = document.getElementById("char-counter");
+    if (inputElement && charCounter) {
+        inputElement.addEventListener("input", () => {
+            const currentLength = inputElement.value.length;
+            charCounter.textContent = `${currentLength}/600`;
+            
+            // Opcional: muda a cor se chegar perto do limite
+            if (currentLength >= 550) {
+                charCounter.style.color = "#f5c400"; // Amarelo de atenção
+            } else {
+                charCounter.style.color = "#888";
             }
         });
     }

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 import sqlite3
 
@@ -7,7 +7,7 @@ class Mensagem(BaseModel):
     text: str
 
 class ChatInput(BaseModel):
-    pergunta: str
+    pergunta: str = Field(..., max_length=600, description="Texto de entrada do usuário")
     historico: List[Mensagem] = []
     modo: str = "gestor"
     modovisualizacao: str = "dia"
