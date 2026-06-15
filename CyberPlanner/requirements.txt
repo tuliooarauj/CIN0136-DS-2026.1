@@ -1,8 +1,10 @@
 fastapi
 uvicorn
+pydantic
+psycopg2-binary
+google-generativeai
 google-genai
 python-dotenv
-pydantic
 jinja2
 aiofiles
 pytest
