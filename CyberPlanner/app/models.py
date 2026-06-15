@@ -44,11 +44,6 @@ def inicializar_banco():
     conexao, _, id_tipo = obter_conexao()
     cursor = conexao.cursor()
     
-    # 🚨 ADICIONE ESTA LINHA AQUI EMBAIXO:
-    cursor.execute("DROP TABLE IF EXISTS usuarios CASCADE;")
-    conexao.commit()
-    
-    # O resto do seu código continua exatamente igual...
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS usuarios (
             id {id_tipo} PRIMARY KEY,
@@ -61,7 +56,7 @@ def inicializar_banco():
     conexao.close()
     
     criar_tabela_historico()
-    
+
 def criar_tabela_historico():
     conexao, _, id_tipo = obter_conexao()
     cursor = conexao.cursor()
