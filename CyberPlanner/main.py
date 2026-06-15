@@ -52,6 +52,15 @@ async def abrir_site(request: Request):
 async def abrir_login(request: Request):
     return templates.TemplateResponse(request=request, name="login.html", context={"request": request})
 
+@app.get("/calendario")
+async def abrir_calendario(request: Request):
+
+    return templates.TemplateResponse(
+        request=request,
+        name="calendar.html",
+        context={"request": request}
+    )
+
 # 🔐 ROTA DE CADASTRO
 @app.post(
         "/cadastro", 
@@ -112,7 +121,7 @@ async def chat_proxy(dados: ChatInput):
             visualizacao=visualizacao_segura
         )
         return {"resposta": resposta}
-        
+        #
     except Exception as e:
         erro_msg = str(e)
         if "API key not valid" in erro_msg or "400" in erro_msg:

@@ -18,8 +18,24 @@
                 <h1>CyberPlanner</h1>
                 <p>Gestor de Rotina com IA</p>
             </div>
-            <button id="toggle-calendar-btn" onclick="toggleCalendar()" title="Ver Calendário">📅</button> 
-            <button id="btn-logout" class="btn-logout" onclick="fazerLogout()">Sair</button>
+            <button id="toggle-calendar-btn"
+        onclick="toggleCalendar()"
+        title="Ver Calendário de Rotinas">
+    📅
+</button>
+
+<a href="/calendario" style="text-decoration:none;">
+    <button id="btn-calendar-month"
+            title="Calendário Mensal">
+        📆
+    </button>
+</a>
+
+<button id="btn-logout"
+        class="btn-logout"
+        onclick="fazerLogout()">
+    Sair
+</button>
             <div class="status-dot" title="Online"></div>
         </div>
 

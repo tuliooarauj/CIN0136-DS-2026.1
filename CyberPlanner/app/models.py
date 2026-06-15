@@ -176,7 +176,7 @@ def criar_tabela_eventos():
     conexao.commit()
     cursor.close()
     conexao.close()
-
+#
 def criar_evento(evento: EventoInput):
     conexao, p, _ = obter_conexao()
     cursor = conexao.cursor()

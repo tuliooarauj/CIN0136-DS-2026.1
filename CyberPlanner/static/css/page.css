@@ -446,3 +446,16 @@ body {
 }
 
 @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+#btn-calendar-month {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 20px;
+    margin-left: 8px;
+    transition: transform 0.2s ease;
+}
+
+#btn-calendar-month:hover {
+    transform: scale(1.1);
+}
