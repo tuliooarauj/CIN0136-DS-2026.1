@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 from pydantic import BaseModel, Field
-=======
 import os
 import psycopg2
-from pydantic import BaseModel
->>>>>>> 27cdb0c069ac79e6ade9bf4e13d01155a8d1989d
 from typing import List
 
 # Busca a URL do banco do Render. Se não achar, roda em modo SQLite local.
