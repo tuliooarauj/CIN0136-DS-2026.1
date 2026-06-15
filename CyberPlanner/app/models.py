@@ -44,10 +44,10 @@ def inicializar_banco():
     conexao, _, id_tipo = obter_conexao()
     cursor = conexao.cursor()
     
-    # Criação da tabela de Usuários adaptada para o tipo correto de ID
+    # Adicionada explicitamente a indicação de PRIMARY KEY para o Postgres aceitar a Foreign Key
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS usuarios (
-            id {id_tipo},
+            id {id_tipo} PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL
         );
