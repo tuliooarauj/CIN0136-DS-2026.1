@@ -183,7 +183,8 @@ async function enviarMensagem() {
             addRow("model", `<span class="error-msg">Erro ${response.status}: ${escapeHtml(data.detail || "Erro desconhecido")}</span>`);
             historico.pop();
         } else {
-            const respostaHtml = marked.parse(data.resposta);
+            // Uso seguro do marked vindo da janela global
+            const respostaHtml = window.marked ? window.marked.parse(data.resposta) : data.resposta;
             addRow("model", respostaHtml);
             historico.push({ role: "model", text: data.resposta });
             
@@ -252,7 +253,8 @@ function renderizarRotinaSemanal() {
     container.innerHTML = `
         <div class="calendar-timeline">
             ${codingFixos.map(evento => {
-                const atividadeMarkdown = marked.parseInline(evento.atividade);
+                // Uso seguro do marked inline vindo da janela global
+                const atividadeMarkdown = window.marked ? window.marked.parseInline(evento.atividade) : evento.atividade;
                 return `
                     <div class="timeline-item">
                         <div class="time-tag">${evento.horario}</div>
@@ -285,7 +287,7 @@ async function carregarHistoricoDoBanco(userId) {
                 data.historico.forEach((msg) => {
                     historico.push({ role: msg.role, text: msg.text });
                     
-                    let conteudoHtml = msg.role === "model" ? marked.parse(msg.text) : escapeHtml(msg.text);
+                    let conteudoHtml = msg.role === "model" ? (window.marked ? window.marked.parse(msg.text) : msg.text) : escapeHtml(msg.text);
                     addRow(msg.role === "user" ? "user" : "model", conteudoHtml);
 
                     if (msg.role === "model") {
@@ -311,10 +313,9 @@ async function carregarHistoricoDoBanco(userId) {
 }
 
 function renderizarListaLateralCompleta() {
-    console.log("Lista lateral atualizada.");
+    console.log("Lista lateral updated.");
 }
 
-// Função global de logout chamada direto pelo HTML
 function fazerLogout() {
     localStorage.removeItem("cyberplanner_user_id");
     localStorage.removeItem("cyberplanner_username");
@@ -325,26 +326,18 @@ function fazerLogout() {
 document.addEventListener("DOMContentLoaded", () => {
     const userId = localStorage.getItem("cyberplanner_user_id");
     
-    // Proteção de rota segura: se NÃO houver utilizador, manda para o login e mata o resto do script
     if (!userId) {
         window.location.href = "/login";
         return; 
     }
 
-    // Se houver utilizador, carrega o histórico normalmente
     carregarHistoricoDoBanco(userId);
 
-    // Configuração correta do botão de Logout
     const btnLogout = document.getElementById("btn-logout");
     if (btnLogout) {
-        btnLogout.addEventListener("click", () => {
-            localStorage.removeItem("cyberplanner_user_id");
-            localStorage.removeItem("cyberplanner_username");
-            window.location.href = "/login";
-        });
+        btnLogout.addEventListener("click", fazerLogout);
     }
     
-    // Configuração do campo de texto (Enviar com Enter)
     const inputElement = document.getElementById("user-input");
     const charCounter = document.getElementById("char-counter");
     if (inputElement && charCounter) {
@@ -352,11 +345,17 @@ document.addEventListener("DOMContentLoaded", () => {
             const currentLength = inputElement.value.length;
             charCounter.textContent = `${currentLength}/600`;
             
-            // Opcional: muda a cor se chegar perto do limite
             if (currentLength >= 550) {
-                charCounter.style.color = "#f5c400"; // Amarelo de atenção
+                charCounter.style.color = "#f5c400"; 
             } else {
                 charCounter.style.color = "#888";
+            }
+        });
+        
+        // Permite enviar a mensagem apertando a tecla ENTER
+        inputElement.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                enviarMensagem();
             }
         });
     }
