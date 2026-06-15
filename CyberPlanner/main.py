@@ -37,7 +37,11 @@ async def abrir_login(request: Request):
     return templates.TemplateResponse(request=request, name="login.html", context={"request": request})
 
 # 🔐 ROTA DE CADASTRO
-@app.post("/cadastro")
+@app.post(
+        "/cadastro", 
+        responses={
+            400:{'Descrição': 'Erro na página de cadastro'}
+                   })
 async def rota_cadastro(dados: UserAuth):
     if not dados.username.strip() or not dados.password.strip():
         raise HTTPException(status_code=400, detail="Usuário e senha não podem estar vazios.")
@@ -47,7 +51,11 @@ async def rota_cadastro(dados: UserAuth):
     return {"mensagem": "Usuário criado com sucesso!"}
 
 # 🔑 ROTA DE LOGIN
-@app.post("/login")
+@app.post(
+        "/login",
+        responses={
+            401:{"Descrição": "Erro na página de login"}
+            })
 async def rota_login(dados: UserAuth):
     usuario_id = verificar_usuario(dados.username.strip(), dados.password)
     if not usuario_id:
