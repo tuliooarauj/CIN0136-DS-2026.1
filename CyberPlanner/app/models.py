@@ -30,6 +30,20 @@ class SalvarMensagemInput(BaseModel):
     role: str
     text: str
 
+class EventoInput(BaseModel):
+    user_id: int
+    titulo: str
+    descricao: str = ""
+    data_inicio: str
+    data_fim: str
+
+
+class EventoUpdate(BaseModel):
+    titulo: str
+    descricao: str = ""
+    data_inicio: str
+    data_fim: str
+
 def obter_conexao():
     """Retorna a conexão, o formato de placeholder e o tipo de ID sequencial adequado"""
     if DATABASE_URL and DATABASE_URL.startswith("postgres"):
@@ -56,6 +70,7 @@ def inicializar_banco():
     conexao.close()
     
     criar_tabela_historico()
+    criar_tabela_eventos()
 
 def criar_tabela_historico():
     conexao, _, id_tipo = obter_conexao()
@@ -140,3 +155,122 @@ def buscar_historico_usuario(user_id: int):
     cursor.close()
     conexao.close()
     return [{"role": row[0], "text": row[1]} for row in linhas]
+
+
+def criar_tabela_eventos():
+    conexao, _, id_tipo = obter_conexao()
+    cursor = conexao.cursor()
+
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS eventos (
+            id {id_tipo},
+            user_id INTEGER NOT NULL,
+            titulo TEXT NOT NULL,
+            descricao TEXT,
+            data_inicio TEXT NOT NULL,
+            data_fim TEXT NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES usuarios(id)
+        );
+    """)
+
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+
+def criar_evento(evento: EventoInput):
+    conexao, p, _ = obter_conexao()
+    cursor = conexao.cursor()
+
+    cursor.execute(
+        f"""
+        INSERT INTO eventos
+        (user_id, titulo, descricao, data_inicio, data_fim)
+        VALUES ({p}, {p}, {p}, {p}, {p})
+        """,
+        (
+            evento.user_id,
+            evento.titulo,
+            evento.descricao,
+            evento.data_inicio,
+            evento.data_fim
+        )
+    )
+
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+
+#Listar eventos 
+def listar_eventos(user_id):
+    conexao, p, _ = obter_conexao()
+    cursor = conexao.cursor()
+
+    cursor.execute(
+        f"""
+        SELECT id,
+               titulo,
+               descricao,
+               data_inicio,
+               data_fim
+        FROM eventos
+        WHERE user_id = {p}
+        ORDER BY data_inicio
+        """,
+        (user_id,)
+    )
+
+    eventos = cursor.fetchall()
+
+    cursor.close()
+    conexao.close()
+
+    return [
+        {
+            "id": e[0],
+            "titulo": e[1],
+            "descricao": e[2],
+            "data_inicio": e[3],
+            "data_fim": e[4]
+        }
+        for e in eventos
+    ]
+
+#atualizar eventoo
+def atualizar_evento(id_evento: int, evento: EventoUpdate):
+    conexao, p, _ = obter_conexao()
+    cursor = conexao.cursor()
+
+    cursor.execute(
+        f"""
+        UPDATE eventos
+        SET titulo = {p},
+            descricao = {p},
+            data_inicio = {p},
+            data_fim = {p}
+        WHERE id = {p}
+        """,
+        (
+            evento.titulo,
+            evento.descricao,
+            evento.data_inicio,
+            evento.data_fim,
+            id_evento
+        )
+    )
+
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+
+def deletar_evento(id_evento):
+    conexao, p, _ = obter_conexao()
+    cursor = conexao.cursor()
+
+    cursor.execute(
+        f"DELETE FROM eventos WHERE id = {p}",
+        (id_evento,)
+    )
+
+    conexao.commit()
+    cursor.close()
+    conexao.close()

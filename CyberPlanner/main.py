@@ -6,8 +6,23 @@ from fastapi.templating import Jinja2Templates
 
 # Atualize seus imports do app.models
 from app.models import (
-    ChatInput, UserAuth, inicializar_banco, cadastrar_usuario, verificar_usuario,
-    criar_tabela_historico, salvar_mensagem_banco, buscar_historico_usuario, SalvarMensagemInput
+    ChatInput,
+    UserAuth,
+    inicializar_banco,
+    cadastrar_usuario,
+    verificar_usuario,
+    criar_tabela_historico,
+    salvar_mensagem_banco,
+    buscar_historico_usuario,
+    SalvarMensagemInput,
+
+    EventoInput,
+    EventoUpdate,
+    criar_tabela_eventos,
+    criar_evento,
+    listar_eventos,
+    atualizar_evento,
+    deletar_evento
 )
 from app.core import obter_resposta_ia
 
@@ -15,6 +30,7 @@ app = FastAPI()
 
 inicializar_banco()
 criar_tabela_historico()
+criar_tabela_eventos()
 
 # --- CONFIGURAÇÃO DE CORS ---
 app.add_middleware(
@@ -109,3 +125,41 @@ async def chat_proxy(dados: ChatInput):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro interno na comunicação com a API: {erro_msg}"
         )
+    
+@app.post("/eventos")
+async def novo_evento(evento: EventoInput):
+
+    criar_evento(evento)
+
+    return {
+        "mensagem": "Evento criado com sucesso"
+    }
+
+
+@app.get("/eventos/{user_id}")
+async def obter_eventos(user_id: int):
+
+    return listar_eventos(user_id)
+
+
+@app.put("/eventos/{id_evento}")
+async def editar_evento(
+    id_evento: int,
+    evento: EventoUpdate
+):
+
+    atualizar_evento(id_evento, evento)
+
+    return {
+        "mensagem": "Evento atualizado"
+    }
+
+
+@app.delete("/eventos/{id_evento}")
+async def remover_evento(id_evento: int):
+
+    deletar_evento(id_evento)
+
+    return {
+        "mensagem": "Evento removido"
+    }
