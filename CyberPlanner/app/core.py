@@ -4,7 +4,7 @@ from google.genai import types
 from dotenv import load_dotenv
 
 # Carrega as variáveis do ficheiro .env
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env.example')) 
+load_dotenv() 
 
 client = genai.Client()
 
