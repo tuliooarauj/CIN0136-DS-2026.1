@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from typing import List
 import sqlite3
 
+NAME_DB = 'cyberplanner.db'
+
 class Mensagem(BaseModel):
     role: str
     text: str
@@ -22,7 +24,7 @@ class SalvarMensagemInput(BaseModel):
     text: str
 
 def inicializar_banco():
-    conexao = sqlite3.connect("cyberplanner.db")
+    conexao = sqlite3.connect(NAME_DB)
     cursor = conexao.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS usuarios (
@@ -36,7 +38,7 @@ def inicializar_banco():
 
 def cadastrar_usuario(username, password):
     try:
-        conexao = sqlite3.connect("cyberplanner.db")
+        conexao = sqlite3.connect(NAME_DB)
         cursor = conexao.cursor()
         cursor.execute("INSERT INTO usuarios (username, password) VALUES (?, ?)", (username, password))
         conexao.commit()
@@ -46,7 +48,7 @@ def cadastrar_usuario(username, password):
         return False
 
 def verificar_usuario(username, password):
-    conexao = sqlite3.connect("cyberplanner.db")
+    conexao = sqlite3.connect(NAME_DB)
     cursor = conexao.cursor()
     cursor.execute("SELECT id FROM usuarios WHERE username = ? AND password = ?", (username, password))
     usuario = cursor.fetchone()
@@ -56,7 +58,7 @@ def verificar_usuario(username, password):
     return None
 
 def criar_tabela_historico():
-    conexao = sqlite3.connect("cyberplanner.db")
+    conexao = sqlite3.connect(NAME_DB)
     cursor = conexao.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS historico_chat (
@@ -72,7 +74,7 @@ def criar_tabela_historico():
     conexao.close()
 
 def salvar_mensagem_banco(user_id: int, role: str, text: str):
-    conexao = sqlite3.connect("cyberplanner.db")
+    conexao = sqlite3.connect(NAME_DB)
     cursor = conexao.cursor()
     cursor.execute(
         "INSERT INTO historico_chat (user_id, role, text) VALUES (?, ?, ?)",
@@ -82,7 +84,7 @@ def salvar_mensagem_banco(user_id: int, role: str, text: str):
     conexao.close()
 
 def buscar_historico_usuario(user_id: int):
-    conexao = sqlite3.connect("cyberplanner.db")
+    conexao = sqlite3.connect(NAME_DB)
     cursor = conexao.cursor()
     cursor.execute(
         "SELECT role, text FROM historico_chat WHERE user_id = ? ORDER BY data_envio ASC",
