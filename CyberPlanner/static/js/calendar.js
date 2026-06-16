@@ -23,6 +23,10 @@ async function carregarEventos() {
 
         eventos = await resposta.json();
 
+        console.log(
+            "Eventos carregados:",
+            eventos
+        );
     } catch (erro) {
 
         console.error(
