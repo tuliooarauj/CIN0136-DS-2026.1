@@ -35,36 +35,51 @@ let currentDate = new Date();
 
 async function carregarEventos() {
 
-    try {
+    eventos = [];
 
-        const userId = localStorage.getItem(
-            "cyberplanner_user_id"
+    const rotinaSalva =
+        localStorage.getItem(
+            "rotinaGlobal"
         );
 
-        if (!userId) {
-            console.log("Usuário não encontrado");
-            return;
-        }
-
-        const resposta = await fetch(
-            `/eventos/${userId}`
-        );
-
-        eventos = await resposta.json();
+    if (!rotinaSalva) {
 
         console.log(
-            "Eventos carregados:",
-            eventos
-        );
-    } catch (erro) {
-
-        console.error(
-            "Erro ao carregar eventos",
-            erro
+            "Nenhuma rotina encontrada"
         );
 
-        eventos = [];
+        return;
     }
+
+    const rotina =
+        JSON.parse(
+            rotinaSalva
+        );
+
+    Object.keys(rotina)
+        .forEach(dia => {
+
+            rotina[dia]
+                .forEach(item => {
+
+                    eventos.push({
+
+                        titulo:
+                            item.atividade,
+
+                        descricao:
+                            dia
+
+                    });
+
+                });
+
+        });
+
+    console.log(
+        "Eventos carregados:",
+        eventos
+    );
 }
 
 async function renderCalendar() {
@@ -158,10 +173,18 @@ window.addEventListener("load", async () => {
     await renderCalendar();
 });
 
-function eventosDoDia(dia, mes, ano) {
+function eventosDoDia(
+    dia,
+    mes,
+    ano
+) {
 
     const dataAtual =
-        new Date(ano, mes, dia);
+        new Date(
+            ano,
+            mes,
+            dia
+        );
 
     const diasSemana = [
         "Dom",
@@ -174,20 +197,12 @@ function eventosDoDia(dia, mes, ano) {
     ];
 
     const diaAtual =
-        diasSemana[dataAtual.getDay()];
+        diasSemana[
+            dataAtual.getDay()
+        ];
 
-    return eventos.filter(evento => {
-
-        const textoEvento =
-            `${evento.titulo} ${evento.descricao}`;
-
-        const diasAlvo =
-            descobrirDiasAlvo(textoEvento);
-
-        return diasAlvo.includes(
-            diaAtual
-        );
-
-    });
-
+    return eventos.filter(
+        evento =>
+            evento.descricao === diaAtual
+    );
 }

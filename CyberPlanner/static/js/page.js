@@ -2,7 +2,17 @@ const API_URL = "/chat";
 
 // Estrutura única e simplificada (Sem múltiplos chats)
 let historico = [];
-let rotinaGlobal = { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sáb: [], Dom: [] };
+let rotinaGlobal = {
+    Seg: [],
+    Ter: [],
+    Qua: [],
+    Qui: [],
+    Sex: [],
+    Sáb: [],
+    Dom: []
+};
+
+window.rotinaGlobal = rotinaGlobal;
 
 // Controle focado exclusivamente no dia da semana ativo
 let diaSelecionadoSemana = "Seg";
@@ -109,10 +119,19 @@ function extrairDadosTabela(textoIA) {
         diasAtualizados.forEach(dia => {
             rotinaGlobal[dia] = novasRotinasSemanais[dia];
         });
+        localStorage.setItem(
+            "rotinaGlobal",
+            JSON.stringify(rotinaGlobal)
+        );
         diaSelecionadoSemana = diasAtualizados[0];
         atualizarEstiloAbasSemana();
     }
-    
+    window.rotinaGlobal = rotinaGlobal;
+
+    console.log(
+        "Rotina Global:",
+        rotinaGlobal
+    );
     renderizarRotinaSemanal();
 }
 
