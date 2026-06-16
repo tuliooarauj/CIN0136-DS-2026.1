@@ -1,3 +1,32 @@
+function descobrirDiasAlvo(texto) {
+    const textoMinusculo = texto.toLowerCase();
+    let diasAlvo = [];
+
+    if (textoMinusculo.includes("segunda") || textoMinusculo.includes("seg-")) diasAlvo.push("Seg");
+    if (textoMinusculo.includes("terça") || textoMinusculo.includes("ter-")) diasAlvo.push("Ter");
+    if (textoMinusculo.includes("quarta") || textoMinusculo.includes("qua-")) diasAlvo.push("Qua");
+    if (textoMinusculo.includes("quinta") || textoMinusculo.includes("qui-")) diasAlvo.push("Qui");
+    if (textoMinusculo.includes("sexta") || textoMinusculo.includes("sex-")) diasAlvo.push("Sex");
+    if (textoMinusculo.includes("sábado") || textoMinusculo.includes("sabado") || textoMinusculo.includes("sáb-")) diasAlvo.push("Sáb");
+    if (textoMinusculo.includes("domingo") || textoMinusculo.includes("dom-")) diasAlvo.push("Dom");
+
+    if (diasAlvo.length === 0) {
+        if (textoMinusculo.includes("fim de semana") || textoMinusculo.includes("final de semana")) {
+            return ["Sáb", "Dom"];
+        }
+
+        if (textoMinusculo.includes("dias úteis") || textoMinusculo.includes("semana inteira") || textoMinusculo.includes("meio da semana")) {
+            return ["Seg", "Ter", "Qua", "Qui", "Sex"];
+        }
+
+        if (textoMinusculo.includes("todos os dias")) {
+            return ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+        }
+    }
+
+    return diasAlvo;
+}
+
 const calendar = document.getElementById("calendar");
 const monthYear = document.getElementById("monthYear");
 
@@ -131,17 +160,34 @@ window.addEventListener("load", async () => {
 
 function eventosDoDia(dia, mes, ano) {
 
+    const dataAtual =
+        new Date(ano, mes, dia);
+
+    const diasSemana = [
+        "Dom",
+        "Seg",
+        "Ter",
+        "Qua",
+        "Qui",
+        "Sex",
+        "Sáb"
+    ];
+
+    const diaAtual =
+        diasSemana[dataAtual.getDay()];
+
     return eventos.filter(evento => {
 
-        const data = new Date(
-            evento.data_inicio
-        );
+        const textoEvento =
+            `${evento.titulo} ${evento.descricao}`;
 
-        return (
-            data.getDate() === dia &&
-            data.getMonth() === mes &&
-            data.getFullYear() === ano
+        const diasAlvo =
+            descobrirDiasAlvo(textoEvento);
+
+        return diasAlvo.includes(
+            diaAtual
         );
 
     });
+
 }
